@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Садина Смарт Риболов - LIVE</title>
+    <!-- Firebase SDK (Compat версии за директна работа в един файл) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --bg-color: #121824;
+            --card-bg: #1c2436;
+            --accent-color: #2ecc71;
+            --admin-color: #e74c3c;
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: #2d3748;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding-bottom: 70px;
+            font-size: 14px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+            border-radius: 0 0 15px 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 18px;
+            color: var(--text-color);
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 12px;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .user-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #2d3748;
+            border-radius: 20px;
+            font-size: 11px;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 6px;
+            color: #e2e8f0;
+        }
+
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .weather-item {
+            background: #222d42;
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .weather-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .weather-value {
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .activity-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 5px;
+        }
+
+        .fish-row {
+            background: #222d42;
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .fish-main-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .fish-bar-bg {
+            background: #121824;
+            height: 8px;
+            border-radius: 4px;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .fish-bar-fill {
+            background: var(--accent-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .fish-layer-badge {
+            font-size: 11px;
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 2px;
+        }
+
+        .recommendation-box {
+            background: linear-gradient(135deg, #1e3a8a, #1e40af);
+            border-left: 4px solid #3b82f6;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag-btn {
+            background-color: #222d42;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .tag-btn.active {
+            background-color: var(--accent-color);
+            color: #000;
+            font-weight: bold;
+            border-color: var(--accent-color);
+        }
+
+        .input-text {
+            width: 100%;
+            background-color: #222d42;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: var(--accent-color);
+            color: #121824;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .catch-item {
+            background: #222d42;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .catch-item.others-catch {
+            border-left-color: var(--admin-color);
+            background: #2a2230;
+        }
+
+        .catch-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .catch-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .catch-details {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 11px;
+            cursor: pointer;
+            width: 33%;
+            text-align: center;
+        }
+
+        .nav-item.active {
+            color: var(--accent-color);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        .admin-only {
+            display: none;
+        }
+
+        body.is-admin .admin-only {
+            display: block;
+        }
+
+        .badge-user-tag {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 id="app-header-title">Садина Смарт Риболов</h1>
+        <p>Язовир Садина, гр. Пордим</p>
+        <div class="user-badge" onclick="promptSwitchUser()">Текущ профил: <span id="current-user-display">Павел (VIP)</span></div>
+    </header>
+
+    <div class="container">
+        
+        <!-- VIEW 1: DASHBOARD -->
+        <div id="view-dashboard" class="view active">
+            <!-- КАРТА 1: МЕТЕОРОЛОГИЯ -->
+            <div class="card">
+                <div class="card-title">
+                    <span>⏱️ Времето в момента (Пордим)</span>
+                    <button onclick="fetchWeather()" style="background:none; border:none; color:var(--accent-color); cursor:pointer;">Обнови 🔄</button>
+                </div>
+                <div class="weather-grid">
+                    <div class="weather-item">
+                        <span class="weather-label">Атм. Налягане</span>
+                        <span class="weather-value" id="w-pressure">-- hPa</span>
+                    </div>
+                    <div class="weather-item">
+                        <span class="weather-label">Температура</span>
+                        <span class="weather-value" id="w-temp">-- °C</span>
+                    </div>
+                    <div class="weather-item">
+                        <span class="weather-label">Вятър</span>
+                        <span class="weather-value" id="w-wind">-- м/с</span>
+                    </div>
+                    <div class="weather-item">
+                        <span class="weather-label">Облачност / Дъжд</span>
+                        <span class="weather-value" id="w-condition">--</span>
+                    </div>
+                </div>
+                <div class="recommendation-box">
+                    <strong style="color: #60a5fa; display:block; margin-bottom: 4px;">🤖 Анализ на уловите:</strong>
+                    <span id="smart-recommendation">Зареждане на данни...</span>
+                </div>
+            </div>
+
+            <!-- КАРТА 2: ИНДЕКС ЗА АКТИВНОСТ И СЛОЕВЕ -->
+            <div class="card">
+                <div class="card-title">🐟 Активност и Слоеве на рибата (Изчислено на живо)</div>
+                <div class="activity-container">
+                    <!-- Шаран -->
+                    <div class="fish-row">
+                        <div class="fish-main-info">
+                            <span>Carp / Шаран</span>
+                            <span id="act-pct-sharan">--%</span>
+                        </div>
+                        <div class="fish-bar-bg"><div class="fish-bar-fill" id="act-bar-sharan"></div></div>
+                        <div class="fish-layer-badge">🎯 Перфектен слой: <span id="act-layer-sharan" style="font-weight: bold; color: #fff;">--</span></div>
+                    </div>
+                    <!-- Амур -->
+                    <div class="fish-row">
+                        <div class="fish-main-info">
+                            <span>Grass Carp / Амур</span>
+                            <span id="act-pct-amur">--%</span>
+                        </div>
+                        <div class="fish-bar-bg"><div class="fish-bar-fill" id="act-bar-amur"></div></div>
+                        <div class="fish-layer-badge">🎯 Перфектен слой: <span id="act-layer-amur" style="font-weight: bold; color: #fff;">--</span></div>
+                    </div>
+                    <!-- Бяла риба -->
+                    <div class="fish-row">
+                        <div class="fish-main-info">
+                            <span>Zander / Бяла риба</span>
+                            <span id="act-pct-biala">--%</span>
+                        </div>
+                        <div class="fish-bar-bg"><div class="fish-bar-fill" id="act-bar-biala"></div></div>
+                        <div class="fish-layer-badge">🎯 Перфектен слой: <span id="act-layer-biala" style="font-weight: bold; color: #fff;">--</span></div>
+                    </div>
+                    <!-- Каракуда -->
+                    <div class="fish-row">
+                        <div class="fish-main-info">
+                            <span>Crucian / Каракуда</span>
+                            <span id="act-pct-karakuda">--%</span>
+                        </div>
+                        <div class="fish-bar-bg"><div class="fish-bar-fill" id="act-bar-karakuda"></div></div>
+                        <div class="fish-layer-badge">🎯 Перфектен слой: <span id="act-layer-karakuda" style="font-weight: bold; color: #fff;">--</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- КАРТА 3: ИНТЕРАКТИВНА САТЕЛИТНА КАРТА НА СЕКТОРА -->
+            <div class="card">
+                <div class="card-title">
+                    <span>📍 Сателитна карта на сектора</span>
+                    <a href="https://www.google.com/maps/search/?api=1&query=43.4122,24.8411" target="_blank" style="color:var(--accent-color); text-decoration:none; font-size:12px; border:1px solid var(--border-color); padding:2px 6px; border-radius:4px; background:#121824;">Отвори в Maps 🗺️</a>
+                </div>
+                <div style="width: 100%; height: 220px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); position: relative;">
+                    <iframe 
+                        width="100%" 
+                        height="100%" 
+                        frameborder="0" 
+                        style="border:0;" 
+                        src="https://maps.google.com/maps?q=43.4122,24.8411&z=16&t=h&output=embed" 
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            </div>
+
+            <!-- VIP SECRET RADAR SECTION -->
+            <div class="card admin-only">
+                <div class="card-title" style="color: var(--admin-color);">
+                    <span>🕵️‍♂️ Тайният VIP Радар ("Чийтърски режим")</span>
+                    <span style="font-size: 10px; background: var(--admin-color); color:white; padding:2px 6px; border-radius:10px;">FIREBASE LIVE</span>
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Тук излизат уловите на других рибари от Firebase в реално време!</p>
+                <div id="admin-radar-list">
+                    <p style="color:var(--text-muted); text-align:center; padding:10px; font-size:12px;">Няма нови улови от други потребители.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📊 Съвпадение от твоята история</div>
+                <div id="history-match-box" style="font-size: 13px; line-height: 1.4; color: #cbd5e1;">
+                    Няма намерени сходни излети.
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: LOG CATCH -->
+        <div id="view-log" class="view">
+            <div class="card">
+                <div class="card-title">🎣 Запиши нов улов в Firebase</div>
+                
+                <div class="form-group">
+                    <label class="form-label">Вид на рибата</label>
+                    <div class="btn-group" id="form-fish">
+                        <button class="tag-btn active" onclick="setSelect('form-fish', this)">Шаран</button>
+                        <button class="tag-btn" onclick="setSelect('form-fish', this)">Амур</button>
+                        <button class="tag-btn" onclick="setSelect('form-fish', this)">Бяла риба</button>
+                        <button class="tag-btn" onclick="setSelect('form-fish', this)">Каракуда</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Захранка на петното (Избери няколко)</label>
+                    <div class="btn-group" id="form-groundbait">
+                        <button class="tag-btn" onclick="toggleMultiSelect(this)">Варена царевица</button>
+                        <button class="tag-btn" onclick="toggleMultiSelect(this)">Пелети</button>
+                        <button class="tag-btn" onclick="toggleMultiSelect(this)">Бойли</button>
+                        <button class="tag-btn" onclick="toggleMultiSelect(this)">Коноп</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Тип на стръвта</label>
+                    <div class="btn-group" id="form-baittype">
+                        <button class="tag-btn active" onclick="setSelect('form-baittype', this)">Топче</button>
+                        <button class="tag-btn" onclick="setSelect('form-baittype', this)">Царевица</button>
+                        <button class="tag-btn" onclick="setSelect('form-baittype', this)">Дъмбел</button>
+                        <button class="tag-btn" onclick="setSelect('form-baittype', this)">Жива стръв</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Размер на стръвта</label>
+                    <div class="btn-group" id="form-size">
+                        <button class="tag-btn" onclick="setSelect('form-size', this)">8мм</button>
+                        <button class="tag-btn" onclick="setSelect('form-size', this)">10мм</button>
+                        <button class="tag-btn active" onclick="setSelect('form-size', this)">14мм</button>
+                        <button class="tag-btn" onclick="setSelect('form-size', this)">20мм</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Цвят на стръвта</label>
+                    <div class="btn-group" id="form-color">
+                        <button class="tag-btn active" onclick="setSelect('form-color', this)">Жълт</button>
+                        <button class="tag-btn" onclick="setSelect('form-color', this)">Бял</button>
+                        <button class="tag-btn" onclick="setSelect('form-color', this)">Розов</button>
+                        <button class="tag-btn" onclick="setSelect('form-color', this)">Кафяв</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Аромат на стръвта</label>
+                    <input type="text" id="input-flavor" class="input-text" placeholder="Прим: Шоколад и Портокал" value="Шоколад и Портокал">
+                </div>
+
+                <button class="btn-submit" onclick="submitCatchToFirebase()">💾 ИЗПРАТИ ВЪВ FIREBASE</button>
+            </div>
+        </div>
+
+        <!-- VIEW 3: HISTORY DIARY -->
+        <div id="view-diary" class="view">
+            <div class="card">
+                <div class="card-title">📖 Твоят личен дневник (От Firebase)</div>
+                <div id="personal-diary-list">
+                    <p style="color:var(--text-muted); text-align:center; padding:20px;">Няма записани улови.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <nav>
+        <div class="nav-item active" onclick="switchView('dashboard', this)">
+            <span class="nav-icon">📊</span>
+            <span>Табло</span>
+        </div>
+        <div class="nav-item" onclick="switchView('log', this)">
+            <span class="nav-icon">🎣</span>
+            <span>Нов Улов</span>
+        </div>
+        <div class="nav-item" onclick="switchView('diary', this)">
+            <span class="nav-icon">📖</span>
+            <span>Дневник</span>
+        </div>
+    </nav>
+
+    <script>
+        // ===================================================
+        // ⚙️ FIREBASE КОНФИГУРАЦИЯ (ТВОИТЕ РЕАЛНИ КЛЮЧОВЕ)
+        // ===================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2Ik2KCs3YN7e4lsb-rKxNjiILX_0tyng",
+            authDomain: "fishing-radar.firebaseapp.com",
+            projectId: "fishing-radar",
+            storageBucket: "fishing-radar.firebasestorage.app",
+            messagingSenderId: "465169105493",
+            appId: "1:465169105493:web:e9c190e88d5d7944eacadc",
+            measurementId: "G-X1GXW8MRD1"
+        };
+        
+        let db = null;
+        let currentUser = localStorage.getItem('sadina_user') || "Павел";
+        let currentWeatherData = { temp: 22, pressure: 1012, wind: 3, condition: "Слънчево", code: 0 };
+        let allCatches = [];
+
+        window.onload = function() {
+            initApp();
+        };
+
+        function initApp() {
+            if (firebaseConfig.apiKey !== "" && firebaseConfig.apiKey !== "ВАШИЯТ_API_KEY_ТУК") {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                listenToFirebaseUpdates();
+            } else {
+                allCatches = JSON.parse(localStorage.getItem('sadina_local_fallback')) || [];
+                renderData();
+            }
+            updateUserUI();
+            fetchWeather();
+        }
+
+        function promptSwitchUser() {
+            let name = prompt("Въведете вашето име за профила (Прим: Pavel, Пешо):", currentUser);
+            if (name && name.trim() !== "") {
+                currentUser = name.trim();
+                localStorage.setItem('sadina_user', currentUser);
+                updateUserUI();
+                renderData();
+            }
+        }
+
+        function updateUserUI() {
+            document.getElementById('current-user-display').innerText = currentUser + (currentUser === "Павел" ? " (VIP)" : "");
+            if (currentUser === "Павел") {
+                document.body.classList.add('is-admin');
+                document.getElementById('app-header-title').innerText = "Садина Смарт Риболов (VIP)";
+            } else {
+                document.body.classList.remove('is-admin');
+                document.getElementById('app-header-title').innerText = "Садина Риболовен Дневник";
+            }
+        }
+
+        function switchView(viewId, element) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        function setSelect(groupId, btn) {
+            document.querySelectorAll(`#${groupId} .tag-btn`).forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function toggleMultiSelect(btn) {
+            btn.classList.toggle('active');
+        }
+
+        function fetchWeather() {
+            const url = "https://api.open-meteo.com/v1/forecast?latitude=43.4122&longitude=24.8411&current=temperature_2m,surface_pressure,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto";
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if(data && data.current) {
+                        const temp = Math.round(data.current.temperature_2m);
+                        const pressure = Math.round(data.current.surface_pressure);
+                        const wind = data.current.wind_speed_10m.toFixed(1);
+                        const code = data.current.weather_code;
+                        
+                        let condition = "Ясно/Слънчево";
+                        if (code > 0 && code <= 3) condition = "Променлива облачност";
+                        if (code > 3 && code <= 48) condition = "Облачно/Мъгла";
+                        if (code > 48) condition = "Дъждовно 🌧️";
+
+                        currentWeatherData = { temp, pressure, wind, condition, code };
+                        
+                        document.getElementById('w-temp').innerText = temp + " °C";
+                        document.getElementById('w-pressure').innerText = pressure + " hPa";
+                        document.getElementById('w-wind').innerText = wind + " м/с";
+                        document.getElementById('w-condition').innerText = condition;
+
+                        generateSmartRecommendation(currentWeatherData);
+                        calculateFishActivityAndLayers(currentWeatherData);
+                    }
+                }).catch(() => {
+                    document.getElementById('w-temp').innerText = "24 °C";
+                    document.getElementById('w-pressure').innerText = "1011 hPa";
+                    document.getElementById('w-wind').innerText = "3.5 м/с";
+                    document.getElementById('w-condition').innerText = "Слънчево";
+                    generateSmartRecommendation(currentWeatherData);
+                    calculateFishActivityAndLayers(currentWeatherData);
+                });
+        }
+
+        function calculateFishActivityAndLayers(w) {
+            let sharanPct = 55, sharanLayer = "Дъно";
+            if (w.pressure < 1010) { sharanPct = 85; sharanLayer = "Дъно (Активно хранене! 📉)"; }
+            else if (w.temp > 22 && w.condition === "Ясно/Слънчево") { sharanPct = 65; sharanLayer = "Средни слоеве / Дъно (Пасивен през деня)"; }
+            else if (w.temp < 12) { sharanPct = 35; sharanLayer = "Дъно (Дълбоки зони)"; }
+            else { sharanPct = 70; sharanLayer = "Дъно (Стабилно хранене)"; }
+
+            let amurPct = 40, amurLayer = "Дъно";
+            if (w.temp > 22) { 
+                amurPct = 90; 
+                amurLayer = (w.condition === "Ясно/Слънчево") ? "Зиг-Риг (Припича се на повърхността ☀️)" : "Средни слоеве"; 
+            } else if (w.temp > 15) { 
+                amurPct = 60; amurLayer = "Дъно / Средни слоеве"; 
+            } else { 
+                amurPct = 15; amurLayer = "Дъно (Замразен метаболизъм)"; 
+            }
+
+            let bialaPct = 50, bialaLayer = "Дъно";
+            if (w.condition === "Дъждовно 🌧️" || w.condition === "Облачно/Мъгла" || w.pressure < 1010) { 
+                bialaPct = 85; bialaLayer = "Средни слоеве / Прагове (Хищникът ловува активно)"; 
+            } else if (w.condition === "Ясно/Слънчево") { 
+                bialaPct = 30; bialaLayer = "Дъно (Крие се в дълбоките закачки)"; 
+            } else { 
+                bialaPct = 60; bialaLayer = "Дъно"; 
+            }
+
+            let karakudaPct = 60, karakudaLayer = "Дъно";
+            if (w.temp > 15) { karakudaPct = 75; karakudaLayer = "Дъно (Плитки брегове и шавари)"; }
+            if (w.condition === "Дъждовно 🌧️") { karakudaPct = 80; karakudaLayer = "Средни слоеве (Търси паднала храна)"; }
+            if (w.temp < 10) { karakudaPct = 35; karakudaLayer = "Дъно (Забита в тинята)"; }
+
+            document.getElementById('act-pct-sharan').innerText = sharanPct + "%";
+            document.getElementById('act-bar-sharan').style.width = sharanPct + "%";
+            document.getElementById('act-layer-sharan').innerText = sharanLayer;
+
+            document.getElementById('act-pct-amur').innerText = amurPct + "%";
+            document.getElementById('act-bar-amur').style.width = amurPct + "%";
+            document.getElementById('act-layer-amur').innerText = amurLayer;
+
+            document.getElementById('act-pct-biala').innerText = bialaPct + "%";
+            document.getElementById('act-bar-biala').style.width = bialaPct + "%";
+            document.getElementById('act-layer-biala').innerText = bialaLayer;
+
+            document.getElementById('act-pct-karakuda').innerText = karakudaPct + "%";
+            document.getElementById('act-bar-karakuda').style.width = karakudaPct + "%";
+            document.getElementById('act-layer-karakuda').innerText = karakudaLayer;
+        }
+
+        function generateSmartRecommendation(w) {
+            let rec = "";
+            if (w.pressure < 1010) {
+                rec = "Налягането пада! Шаранът и хищникът слизат плътно долу. Използвайте ярки флуоро цветове (Бял или Розов) с тежък месен аромат (Squid/Crab).";
+            } else if (w.temp > 22) {
+                rec = "Топло време. Жегата активизира Амура. Хранете масирано с царевица и търсете рибите в горния слой на Зиг-Риг с аромат Ананас.";
+            } else {
+                rec = "Балансирано време. Подходящо за тактика с Метод фидер, малки 8-10мм стръвчета и аромат Чесън или Скопекс.";
+            }
+            document.getElementById('smart-recommendation').innerText = rec;
+            analyzePatternMatching(w);
+        }
+
+        function analyzePatternMatching(w) {
+            const myCatches = allCatches.filter(c => c.user === "Павел");
+            const matches = myCatches.filter(c => Math.abs(c.weather_pressure - w.pressure) <= 3);
+            const matchBox = document.getElementById('history-match-box');
+            
+            if(matches.length > 0) {
+                let lastBest = matches[matches.length - 1];
+                matchBox.innerHTML = `💡 <strong>Историческо съвпадение!</strong> При подобно налягане ти преди хвана <strong>${lastBest.fish}</strong> на стръв: <span style="color:var(--accent-color); font-weight:bold;">${lastBest.size} ${lastBest.baittype} (${lastBest.flavor})</span>. Препоръчително е да заложиш на това!`;
+            } else {
+                matchBox.innerHTML = `ℹ️ Няма записани твои улови в базата при налягане около ${w.pressure} hPa. Системата ще се научи веднага щом запишеш първата си риба при тези условия.`;
+            }
+        }
+
+        function listenToFirebaseUpdates() {
+            if(!db) return;
+            db.collection("sadina_catches").orderBy("timestamp", "desc")
+            .onSnapshot((snapshot) => {
+                allCatches = [];
+                snapshot.forEach((doc) => {
+                    const item = doc.data();
+                    allCatches.push({
+                        user: item.username,
+                        fish: item.fish_type,
+                        groundbait: item.groundbait || [],
+                        baittype: item.bait_type,
+                        size: item.bait_size,
+                        color: item.bait_color,
+                        flavor: item.flavor,
+                        timestamp: item.timestamp,
+                        weather_pressure: item.weather_pressure,
+                        weather_wind: item.weather_wind,
+                        weather_temp: item.weather_temp,
+                        weather_cond: item.weather_cond
+                    });
+                });
+                renderData();
+            }, (error) => {
+                console.error("Грешка при Firebase: ", error);
+            });
+        }
+
+        function getActiveText(groupId) {
+            const activeBtn = document.querySelector(`#${groupId} .tag-btn.active`);
+            return activeBtn ? activeBtn.innerText : "";
+        }
+
+        function getMultiActiveTexts(groupId) {
+            const actives = [];
+            document.querySelectorAll(`#${groupId} .tag-btn.active`).forEach(b => actives.push(b.innerText));
+            return actives;
+        }
+
+        async function submitCatchToFirebase() {
+            const fish = getActiveText('form-fish');
+            const groundbait = getMultiActiveTexts('form-groundbait');
+            const baittype = getActiveText('form-baittype');
+            const size = getActiveText('form-size');
+            const color = getActiveText('form-color');
+            const flavor = document.getElementById('input-flavor').value.trim();
+
+            if(!flavor) {
+                alert("Въведи аромат!");
+                return;
+            }
+
+            const catchData = {
+                username: currentUser,
+                fish_type: fish,
+                groundbait: groundbait,
+                bait_type: baittype,
+                bait_size: size,
+                bait_color: color,
+                flavor: flavor,
+                weather_temp: currentWeatherData.temp,
+                weather_pressure: currentWeatherData.pressure,
+                weather_wind: parseFloat(currentWeatherData.wind),
+                weather_cond: currentWeatherData.condition,
+                timestamp: new Date().toISOString()
+            };
+
+            if (db) {
+                db.collection("sadina_catches").add(catchData)
+                .then(() => {
+                    alert("Уловът е изпратен в Облака успешно!");
+                    document.getElementById('input-flavor').value = "Шоколад и Портокал";
+                    switchView('dashboard', document.querySelector('nav div:nth-child(1)'));
+                })
+                .catch((error) => {
+                    alert("Грешка при Firebase: " + error.message);
+                });
+            } else {
+                let localData = {
+                    user: currentUser, fish, groundbait, baittype, size, color, flavor,
+                    timestamp: new Date().toISOString(),
+                    weather: { temp: currentWeatherData.temp, pressure: currentWeatherData.pressure, wind: currentWeatherData.wind, condition: currentWeatherData.condition }
+                };
+                allCatches.push(localData);
+                localStorage.setItem('sadina_local_fallback', JSON.stringify(allCatches));
+                alert("Записано само локално.");
+                renderData();
+                switchView('dashboard', document.querySelector('nav div:nth-child(1)'));
+            }
+        }
+
+        function renderData() {
+            const personalList = document.getElementById('personal-diary-list');
+            const adminRadarList = document.getElementById('admin-radar-list');
+            
+            personalList.innerHTML = "";
+            adminRadarList.innerHTML = "";
+
+            let hasOthers = false;
+
+            allCatches.forEach(c => {
+                const dateObj = new Date(c.timestamp);
+                const timeStr = dateObj.toLocaleTimeString('bg-BG', {hour: '2-digit', minute:'2-digit'});
+                const dateStr = dateObj.toLocaleDateString('bg-BG', {day: 'numeric', month: 'short'});
+
+                const html = `
+                    <div class="catch-item ${c.user !== currentUser ? 'others-catch' : ''}">
+                        <div class="catch-meta">
+                            <span>📅 ${dateStr} в ${timeStr} ч. | 📉 ${c.weather?.pressure || c.weather_pressure} hPa</span>
+                            <span class="badge-user-tag" style="background:${c.user !== currentUser ? 'var(--admin-color)' : 'var(--accent-color)'}; color:${c.user !== currentUser ? '#fff' : '#121824'}">${c.user}</span>
+                        </div>
+                        <div class="catch-title">🐟 ${c.fish} на Садина</div>
+                        <div class="catch-details">
+                            • <strong>Стръв:</strong> ${c.size} ${c.baittype} (${c.color}, Аромат: <span style="color:#f1c40f;">${c.flavor}</span>)<br>
+                            • <strong>Захранка:</strong> ${c.groundbait && c.groundbait.length > 0 ? c.groundbait.join(', ') : 'Чисто петно'}<br>
+                            • <strong>Метео:</strong> Вятър ${c.weather?.wind || c.weather_wind} м/с, ${c.weather?.condition || c.weather_cond}
+                        </div>
+                    </div>
+                `;
+
+                if (c.user === currentUser) {
+                    personalList.innerHTML += html;
+                }
+
+                if (c.user !== currentUser) {
+                    adminRadarList.innerHTML += html;
+                    hasOthers = true;
+                }
+            });
+
+            if (personalList.innerHTML === "") {
+                personalList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:20px;'>Твоят дневник е празен.</p>";
+            }
+            if (!hasOthers) {
+                adminRadarList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:10px; font-size:12px;'>Радарът е тих.</p>";
+            }
+            
+            if(currentWeatherData) analyzePatternMatching(currentWeatherData);
+        }
+    </script>
+</body>
+</html>
