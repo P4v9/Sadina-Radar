@@ -67,11 +67,12 @@
 </head>
 <body>
 
+    <!-- ЕКРАН ЗА ВХОД -->
     <div id="login-overlay">
         <div class="card" style="width: 100%; max-width: 400px; text-align: center; border-color: var(--accent-color);">
             <h2 style="color: var(--text-color); margin-bottom: 8px;">Садина Смарт Риболов</h2>
             <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 20px;">Въведете името си, за да се свържете с дневника на водоема.</p>
-            <input type="text" id="login-name-input" class="input-text" placeholder="Твоето Име (Прим: Пешо, Иван)" style="text-align: center; margin-bottom: 15px; font-size: 16px;">
+            <input type="text" id="login-name-input" class="input-text" placeholder="Твоето Име (Прим: Пешо, Павел)" style="text-align: center; margin-bottom: 15px; font-size: 16px;">
             <button class="btn-submit" onclick="executeAppLogin()">ВЛЕЗ В СИСТЕМАТА 🚀</button>
         </div>
     </div>
@@ -83,6 +84,7 @@
     </header>
 
     <div class="container">
+        <!-- ТАБ 1: ТАБЛО -->
         <div id="view-dashboard" class="view active">
             <div class="card" style="border: 1px solid var(--gold-color);">
                 <div class="card-title" style="color: var(--gold-color);">🏆 ТОП ТРОФЕИ (Най-голяма риба най-отгоре)</div>
@@ -127,9 +129,9 @@
             </div>
 
             <div class="card">
-                <div class="card-title"><span>📍 Сателитна карта на сектора</span><a href="https://maps.google.com/maps?q=43.4122,24.8411&t=k&z=16" target="_blank" style="color:var(--accent-color); text-decoration:none; font-size:12px; border:1px solid var(--border-color); padding:2px 6px; border-radius:4px; background:#121824;">Цял Екран 🗺️</a></div>
+                <div class="card-title"><span>📍 Сателитна карта на сектора</span><a href="https://maps.google.com/?q=43.4122,24.8411&t=h" target="_blank" style="color:var(--accent-color); text-decoration:none; font-size:12px; border:1px solid var(--border-color); padding:2px 6px; border-radius:4px; background:#121824;">Цял Екран 🗺️</a></div>
                 <div style="width: 100%; height: 220px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); position: relative;">
-                    <iframe width="100%" height="100%" frameborder="0" style="border:0;" src="https://maps.google.com/maps?q=43.4122,24.8411&t=k&z=16&output=embed" allowfullscreen></iframe>
+                    <iframe width="100%" height="100%" frameborder="0" style="border:0;" src="https://maps.google.com/?q=43.4122,24.8411&t=h&output=embed" allowfullscreen></iframe>
                 </div>
             </div>
 
@@ -145,6 +147,7 @@
             </div>
         </div>
 
+        <!-- ТАБ 2: НОВ УЛОВ -->
         <div id="view-log" class="view">
             <div class="card">
                 <div class="card-title">🎣 Запиши нов улов в Firebase</div>
@@ -205,6 +208,7 @@
             </div>
         </div>
 
+        <!-- ТАБ 3: ДНЕВНИК -->
         <div id="view-diary" class="view">
             <div class="card">
                 <div class="card-title">📖 Твоят личен дневник (От Firebase)</div>
@@ -219,10 +223,357 @@
         <div class="nav-item" onclick="switchView('diary', this)"><span class="nav-icon">📖</span><span>Дневник</span></div>
     </nav>
 
+    <!-- СИСТЕМНИ SDK БИБЛИОТЕКИ -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="config.js"></script>
-    <script src="weather.js"></script>
-    <script src="database.js"></script>
+
+    <script>
+        // ==========================================
+        // ⚙️ МОДУЛ 1: ГЛОБАЛНА КОНФИГУРАЦИЯ И СЕСИИ
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2Ik2KCs3YN7e4lsb-rKxNjiILX_0tyng",
+            authDomain: "fishing-radar.firebaseapp.com",
+            projectId: "fishing-radar",
+            storageBucket: "fishing-radar.firebasestorage.app",
+            messagingSenderId: "465169105493",
+            appId: "1:465169105493:web:e9c190e88d5d7944eacadc",
+            measurementId: "G-X1GXW8MRD1"
+        };
+
+        let db = null;
+        let currentUser = localStorage.getItem('sadina_user') || "";
+        let currentWeatherData = { temp: 24, pressure: 1012, wind: 2.5, condition: "Слънчево", code: 0 };
+        let allCatches = [];
+        let globalBase64Photo = "";
+        let isInitialLoad = true;
+        let audioContext = null;
+
+        function checkUserSession() {
+            if (currentUser && currentUser.trim() !== "") {
+                document.getElementById('login-overlay').style.display = 'none';
+                initApp();
+            } else {
+                document.getElementById('login-overlay').style.display = 'flex';
+            }
+        }
+
+        function executeAppLogin() {
+            const nameInput = document.getElementById('login-name-input').value.trim();
+            if(!nameInput) { alert("Моля, въведете име!"); return; }
+            currentUser = nameInput;
+            localStorage.setItem('sadina_user', currentUser);
+            document.getElementById('login-overlay').style.display = 'none';
+            initApp();
+        }
+
+        function clearUserSession() {
+            if(confirm("Искате ли да смените профила?")) {
+                localStorage.removeItem('sadina_user');
+                location.reload();
+            }
+        }
+
+        function initApp() {
+            if (firebaseConfig.apiKey !== "") {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                listenToFirebaseUpdates();
+            }
+            updateUserUI();
+            fetchWeather();
+        }
+
+        function updateUserUI() {
+            const isAdmin = (currentUser.toLowerCase() === "павел" || currentUser.toLowerCase() === "влади");
+            document.getElementById('current-user-display').innerText = currentUser + (isAdmin ? " (VIP)" : "");
+            if (isAdmin) {
+                document.body.classList.add('is-admin');
+                document.getElementById('app-header-title').innerText = "Садина Смарт Риболов (VIP)";
+            } else {
+                document.body.classList.remove('is-admin');
+                document.getElementById('app-header-title').innerText = "Садина Риболовен Дневник";
+            }
+        }
+
+        function switchView(viewId, element) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        // ==========================================
+        // 🌙 МОДУЛ 2: МЕТЕОРОЛОГИЯ И ЛУННА МАТЕМАТИКА
+        // ==========================================
+        function calculateMoonPhase(date) {
+            let lp = 2551443; 
+            let newMoon = new Date(1970, 0, 7, 20, 35, 0);
+            let phase = ((date.getTime() - newMoon.getTime()) / 1000) % lp;
+            let res = phase / lp; 
+            if (res < 0.03 || res > 0.97) return { text: "🌑 Нова Луна", val: res, factor: 1.15 }; 
+            if (res >= 0.03 && res < 0.22) return { text: "🌒 Нарастващ полумесец", val: res, factor: 0.95 };
+            if (res >= 0.22 && res < 0.28) return { text: "🌓 Първа Четвърт", val: res, factor: 1.00 };
+            if (res >= 0.28 && res < 0.47) return { text: "🌔 Нарастваща луна", val: res, factor: 1.05 };
+            if (res >= 0.47 && res < 0.53) return { text: "🌕 Пълнолуние", val: res, factor: 1.20 }; 
+            if (res >= 0.53 && res < 0.72) return { text: "🌖 Намаляваща луна", val: res, factor: 1.00 };
+            if (res >= 0.72 && res < 0.78) return { text: "🌗 Последна Четвърт", val: res, factor: 0.90 };
+            return { text: "🌘 Намаляващ полумесец", val: res, factor: 0.95 };
+        }
+
+        function fetchWeather() {
+            const url = "https://api.open-meteo.com/v1/forecast?latitude=43.4122&longitude=24.8411&current=temperature_2m,surface_pressure,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto";
+            const moonInfo = calculateMoonPhase(new Date());
+            document.getElementById('w-moon').innerText = moonInfo.text;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if(data && data.current) {
+                        const temp = Math.round(data.current.temperature_2m);
+                        const pressure = Math.round(data.current.surface_pressure);
+                        const wind = data.current.wind_speed_10m.toFixed(1);
+                        const code = data.current.weather_code;
+                        let condition = "Ясно/Слънчево";
+                        if (code > 0 && code <= 3) condition = "Променлива облачност";
+                        if (code > 3 && code <= 48) condition = "Облачно/Мъгла";
+                        if (code > 48) condition = "Дъждовно 🌧️";
+
+                        currentWeatherData = { temp, pressure, wind, condition, code };
+                        document.getElementById('w-temp').innerText = temp + " °C";
+                        document.getElementById('w-pressure').innerText = pressure + " hPa";
+                        document.getElementById('w-wind').innerText = wind + " м/с";
+                        document.getElementById('w-condition').innerText = condition;
+                    }
+                    generateSmartRecommendation(currentWeatherData, moonInfo);
+                    calculateFishActivityAndLayers(currentWeatherData, moonInfo);
+                }).catch(() => {
+                    generateSmartRecommendation(currentWeatherData, moonInfo);
+                    calculateFishActivityAndLayers(currentWeatherData, moonInfo);
+                });
+        }
+
+        function calculateFishActivityAndLayers(w, moon) {
+            let sharanPct = Math.round(55 * moon.factor), sharanLayer = "Дъно";
+            if (w.pressure < 1010) { sharanPct = Math.round(85 * moon.factor); sharanLayer = "Дъно (Активно хранене! 📉)"; }
+            let amurPct = 40, amurLayer = "Дъно";
+            if (w.temp > 22) { amurPct = 90; amurLayer = (w.condition.indexOf("Слънчево") !== -1) ? "Зиг-Риг (☀️)" : "Средни слоеве"; }
+            let bialaPct = Math.round(50 * moon.factor), bialaLayer = "Дъно";
+            if (w.pressure < 1010) { bialaPct = Math.round(85 * moon.factor); bialaLayer = "Средни слоеве / Прагове"; }
+            let karakudaPct = 60, karakudaLayer = "Дъно";
+            if (w.temp > 15) karakudaPct = 75;
+
+            if(sharanPct > 100) sharanPct = 100; if(bialaPct > 100) bialaPct = 100;
+
+            document.getElementById('act-pct-sharan').innerText = sharanPct + "%";
+            document.getElementById('act-bar-sharan').style.width = sharanPct + "%";
+            document.getElementById('act-layer-sharan').innerText = sharanLayer;
+            document.getElementById('act-pct-amur').innerText = amurPct + "%";
+            document.getElementById('act-bar-amur').style.width = amurPct + "%";
+            document.getElementById('act-layer-amur').innerText = amurLayer;
+            document.getElementById('act-pct-biala').innerText = bialaPct + "%";
+            document.getElementById('act-bar-biala').style.width = bialaPct + "%";
+            document.getElementById('act-layer-biala').innerText = bialaLayer;
+            document.getElementById('act-pct-karakuda').innerText = karakudaPct + "%";
+            document.getElementById('act-bar-karakuda').style.width = karakudaPct + "%";
+        }
+
+        function generateSmartRecommendation(w, moon) {
+            let rec = "";
+            if(moon.val >= 0.47 && moon.val < 0.53) rec = "🌕 Луната е в Пълнолуние! Очаквай силни рън-ове на едър шаран през цялата нощ.";
+            else if (w.pressure < 1010) rec = "Налягането пада! Рибата слиза долу. Използвайте ярки флуоро цветове и тежък месен аромат.";
+            else rec = "Балансирано време. Подходящо за тактика с Метод фидер и аромат Чесън или Скопекс.";
+            document.getElementById('smart-recommendation').innerText = rec;
+            analyzePatternMatching(w);
+        }
+
+        // ==========================================
+        // 🎣 МОДУЛ 3: FIREBASE БАЗА, ЗВУК И СНИМКИ
+        // ==========================================
+        function unlockAudio() {
+            try {
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') audioContext.resume();
+                let osc = audioContext.createOscillator(); let gain = audioContext.createGain();
+                osc.type = 'sine'; osc.frequency.setValueAtTime(1000, audioContext.currentTime);
+                gain.gain.setValueAtTime(0.001, audioContext.currentTime);
+                osc.connect(gain); gain.connect(audioContext.destination);
+                osc.start(); osc.stop(audioContext.currentTime + 0.02);
+            } catch(e) {}
+        }
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
+
+        function playBiteAlarmSound() {
+            try {
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') audioContext.resume();
+                let time = audioContext.currentTime;
+                for (let i = 0; i < 7; i++) {
+                    let osc = audioContext.createOscillator(); let gain = audioContext.createGain();
+                    osc.type = 'square'; osc.frequency.setValueAtTime(1400, time + i * 0.10); 
+                    gain.gain.setValueAtTime(0.3, time + i * 0.10);
+                    gain.gain.exponentialRampToValueAtTime(0.01, time + i * 0.10 + 0.07);
+                    osc.connect(gain); gain.connect(audioContext.destination);
+                    osc.start(time + i * 0.10); osc.stop(time + i * 0.10 + 0.07);
+                }
+            } catch(e) {}
+        }
+
+        function compressAndHandlePhoto(input) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas'); const MAX_WIDTH = 450;
+                    let width = img.width; let height = img.height;
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
+                    globalBase64Photo = canvas.toDataURL('image/jpeg', 0.65);
+                    document.getElementById('photo-preview').src = globalBase64Photo;
+                    document.getElementById('photo-preview-box').style.display = 'block';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function listenToFirebaseUpdates() {
+            if(!db) return;
+            db.collection("sadina_catches").orderBy("timestamp", "desc")
+            .onSnapshot((snapshot) => {
+                allCatches = [];
+                if (!isInitialLoad) {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === "added" && change.doc.data().username !== currentUser) {
+                            playBiteAlarmSound(); 
+                            if (navigator.vibrate) navigator.vibrate([400, 150, 400, 150, 400]);
+                        }
+                    });
+                }
+                snapshot.forEach((doc) => {
+                    const item = doc.data();
+                    allCatches.push({
+                        user: item.username, fish: item.fish_type, weight: parseFloat(item.weight) || 0,
+                        groundbait: item.groundbait || [], baittype: item.bait_type, size: item.bait_size,
+                        color: item.bait_color, flavor: item.flavor, photo: item.photo || "",
+                        timestamp: item.timestamp, weather_pressure: item.weather_pressure,
+                        weather_wind: item.weather_wind, weather_temp: item.weather_temp, weather_cond: item.weather_cond
+                    });
+                });
+                isInitialLoad = false;
+                renderData();
+            });
+        }
+
+        async function submitCatchToFirebase() {
+            const fish = getActiveText('form-fish');
+            const weight = document.getElementById('input-weight').value;
+            const groundbait = getMultiActiveTexts('form-groundbait');
+            const baittype = getActiveText('form-baittype');
+            const size = getActiveText('form-size');
+            const color = getActiveText('form-color');
+            const flavor = document.getElementById('input-flavor').value.trim();
+
+            if(!flavor) { alert("Въведи аромат!"); return; }
+
+            const catchData = {
+                username: currentUser, fish_type: fish, weight: parseFloat(weight) || 0,
+                groundbait: groundbait, bait_type: baittype, bait_size: size, bait_color: color,
+                flavor: flavor, photo: globalBase64Photo, weather_temp: currentWeatherData.temp,
+                weather_pressure: currentWeatherData.pressure, weather_wind: parseFloat(currentWeatherData.wind),
+                weather_cond: currentWeatherData.condition, timestamp: new Date().toISOString()
+            };
+
+            if (db) {
+                db.collection("sadina_catches").add(catchData)
+                .then(() => {
+                    alert("Уловът е записан в Firebase успешно!");
+                    document.getElementById('input-weight').value = "";
+                    document.getElementById('photo-file').value = "";
+                    document.getElementById('photo-preview-box').style.display = "none";
+                    globalBase64Photo = "";
+                    switchView('dashboard', document.querySelector('nav div:nth-child(1)'));
+                });
+            }
+        }
+
+        function analyzePatternMatching(w) {
+            const myCatches = allCatches.filter(c => c.user === currentUser);
+            const matches = myCatches.filter(c => Math.abs(c.weather_pressure - w.pressure) <= 3);
+            const matchBox = document.getElementById('history-match-box');
+            if(!matchBox) return;
+            if(matches.length > 0) {
+                let lastBest = matches[matches.length - 1];
+                matchBox.innerHTML = `💡 <strong>Историческо съвпадение!</strong> При налягане ${w.pressure} hPa ти преди хвана ${lastBest.fish} на стръв: ${lastBest.size} ${lastBest.baittype} (${lastBest.flavor}).`;
+            } else {
+                matchBox.innerHTML = `ℹ️ Няма записани твои улови в базата при налягане около ${w.pressure} hPa.`;
+            }
+        }
+
+        function renderData() {
+            const personalList = document.getElementById('personal-diary-list');
+            const adminRadarList = document.getElementById('admin-radar-list');
+            const leaderboardList = document.getElementById('leaderboard-list');
+            
+            if(personalList) personalList.innerHTML = ""; 
+            if(adminRadarList) adminRadarList.innerHTML = ""; 
+            if(leaderboardList) leaderboardList.innerHTML = "";
+
+            let sortedByWeight = [...allCatches].sort((a, b) => b.weight - a.weight);
+            let topCatches = sortedByWeight.slice(0, 5);
+
+            if(leaderboardList) {
+                if(topCatches.length > 0) {
+                    topCatches.forEach((c, index) => {
+                        let defaultImg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>';
+                        let imgHtml = c.photo ? `<img class="leaderboard-img" src="${c.photo}">` : `<img class="leaderboard-img" src='${defaultImg}' style="padding:10px;">`;
+                        leaderboardList.innerHTML += `
+                            <div class="leaderboard-item" style="${index === 0 ? 'border-left-color: #f1c40f; background: #2c3e50;' : ''}">
+                                <div class="leaderboard-rank">#${index + 1}</div>${imgHtml}
+                                <div class="leaderboard-info"><div style="font-weight:bold;">${c.fish}</div><div style="font-size:12px; color:var(--text-muted);">Рибар: ${c.user}</div></div>
+                                <div class="leaderboard-weight">${c.weight > 0 ? c.weight.toFixed(2) + ' кг' : '-- кг'}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    leaderboardList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:10px; font-size:12px;'>Няма записани трофеи.</p>";
+                }
+            }
+
+            let hasOthers = false;
+            allCatches.forEach(c => {
+                const dateObj = new Date(c.timestamp);
+                const timeStr = dateObj.toLocaleTimeString('bg-BG', {hour: '2-digit', minute:'2-digit'});
+                const dateStr = dateObj.toLocaleDateString('bg-BG', {day: 'numeric', month: 'short'});
+                let loadedPhotoHtml = c.photo ? `<img src="${c.photo}" class="catch-img-render">` : '';
+                let weightHtml = c.weight > 0 ? `⚖️ <strong>Тегло:</strong> ${c.weight.toFixed(2)} кг<br>` : '';
+
+                const html = `
+                    <div class="catch-item ${c.user !== currentUser ? 'others-catch' : ''}">
+                        <div class="catch-meta"><span>📅 ${dateStr} в ${timeStr} ч. | 📉 ${c.weather_pressure} hPa</span><span class="badge-user-tag" style="background:${c.user !== currentUser ? 'var(--admin-color)' : 'var(--accent-color)'}; color:${c.user !== currentUser ? '#fff' : '#121824'}">${c.user}</span></div>
+                        <div class="catch-title">🐟 ${c.fish} на Садина</div>
+                        <div class="catch-details">${weightHtml}• <strong>Стръв:</strong> ${c.size} ${c.baittype} (${c.color}, Аромат: <span style="color:#f1c40f;">${c.flavor}</span>)<br>• <strong>Захранка:</strong> ${c.groundbait && c.groundbait.length > 0 ? c.groundbait.join(', ') : 'Чисто петно'}</div>
+                        ${loadedPhotoHtml}
+                    </div>
+                `;
+                if (c.user === currentUser && personalList) personalList.innerHTML += html;
+                if (c.user !== currentUser && adminRadarList) { adminRadarList.innerHTML += html; hasOthers = true; }
+            });
+
+            if (personalList && personalList.innerHTML === "") personalList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:20px;'>Твоят дневник е празен.</p>";
+            if (adminRadarList && !hasOthers) adminRadarList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:10px; font-size:12px;'>Радарът е тих.</p>";
+            if(currentWeatherData) analyzePatternMatching(currentWeatherData);
+        }
+
+        function setSelect(groupId, btn) { document.querySelectorAll(`#${groupId} .tag-btn`).forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+        function toggleMultiSelect(btn) { btn.classList.toggle('active'); }
+        function getActiveText(groupId) { const activeBtn = document.querySelector(`#${groupId} .tag-btn.active`); return activeBtn ? activeBtn.innerText : ""; }
+        function getMultiActiveTexts(groupId) { const actives = []; document.querySelectorAll(`#${groupId} .tag-btn.active`).forEach(b => actives.push(b.innerText)); return actives; }
+        
+        window.addEventListener('DOMContentLoaded', checkUserSession);
+    </script>
 </body>
 </html>
