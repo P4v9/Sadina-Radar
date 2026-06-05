@@ -1,17 +1,45 @@
+// 🔊 ГЛОБАЛЕН АУДИО МОДУЛ ЗА СИГНАЛИЗАТОРА
+let audioContext = null;
+
+// Функция, която отключва аудиото на телефона при първото пипане на екрана
+function unlockAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+}
+// Закачаме отключването за абсолютно всяко докосване по екрана
+document.addEventListener('click', unlockAudio);
+document.addEventListener('touchstart', unlockAudio);
+
 function playBiteAlarmSound() {
     try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let time = audioCtx.currentTime;
+        // Проверяваме дали модулът е създаден
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        // Ако телефонът се опитва да го заспива, го събуждаме насила
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        
+        let time = audioContext.currentTime;
+        // Автентичен звук на сигнализатор (7 бързи писъка при рън)
         for (let i = 0; i < 7; i++) {
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.type = 'square'; osc.frequency.setValueAtTime(1350, time + i * 0.12); 
+            let osc = audioContext.createOscillator();
+            let gain = audioContext.createGain();
+            osc.type = 'square'; 
+            osc.frequency.setValueAtTime(1350, time + i * 0.12); 
             gain.gain.setValueAtTime(0.25, time + i * 0.12);
             gain.gain.exponentialRampToValueAtTime(0.01, time + i * 0.12 + 0.08);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(time + i * 0.12); osc.stop(time + i * 0.12 + 0.08);
+            osc.connect(gain); 
+            gain.connect(audioContext.destination);
+            osc.start(time + i * 0.12); 
+            osc.stop(time + i * 0.12 + 0.08);
         }
-    } catch(e) { console.log("Audio pipeline locked", e); }
+    } catch(e) { console.log("Аудиото беше блокирано от операционната система:", e); }
 }
 
 function compressAndHandlePhoto(input) {
@@ -45,7 +73,7 @@ function listenToFirebaseUpdates() {
         if (!isInitialLoad) {
             snapshot.docChanges().forEach((change) => {
                 if (change.type === "added" && change.doc.data().username !== currentUser) {
-                    playBiteAlarmSound(); 
+                    playBiteAlarmSound(); // СВИРИ СИГНАЛИЗАТОРА!
                 }
             });
         }
