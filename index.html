@@ -378,30 +378,61 @@
                 });
         }
 
-        function calculateFishActivityAndLayers(w, moon) {
-            let sharanPct = Math.round(55 * moon.factor), sharanLayer = "Дъно";
-            if (w.pressure < 1010) { sharanPct = Math.round(85 * moon.factor); sharanLayer = "Дъно (Активно хранене! 📉)"; }
-            let amurPct = 40, amurLayer = "Дъно";
-            if (w.temp > 22) { amurPct = 90; amurLayer = (w.condition.indexOf("Слънчево") !== -1) ? "Зиг-Риг (☀️)" : "Средни слоеве"; }
-            let bialaPct = Math.round(50 * moon.factor), bialaLayer = "Дъно";
-            if (w.pressure < 1010) { bialaPct = Math.round(85 * moon.factor); bialaLayer = "Средни слоеве / Прагове"; }
-            let karakudaPct = 60, karakudaLayer = "Дъно";
-            if (w.temp > 15) karakudaPct = 75;
+       function calculateFishActivityAndLayers(w, moon) {
+    let sharanPct = 55, sharanLayer = "Дъно";
 
-            if(sharanPct > 100) sharanPct = 100; if(bialaPct > 100) bialaPct = 100;
+    // 🏆 ПРОФЕСИОНАЛНА ШАРАНДЖИЙСКА ЛОГИКА ЗА АТМОСФЕРНО НАЛЯГАНЕ
+    if (w.pressure >= 1013 && w.pressure <= 1017) {
+        // Златната зона: Перфектно стабилно налягане - рибата е спокойна на дъното
+        sharanPct = Math.round(95 * moon.factor); 
+        sharanLayer = "Дъно (🥇 Идеално налягане! Рибата се храни активно)";
+    } 
+    else if (w.pressure < 1010) {
+        // Бърз спад преди буря: Агресивно, паническо хранене
+        sharanPct = Math.round(85 * moon.factor); 
+        sharanLayer = "Дъно (Активно хранене преди фронт! 📉)";
+    } 
+    else if (w.pressure > 1020) {
+        // Прекалено високо налягане: Натиска мехура и я вдига нагоре
+        sharanPct = Math.round(45 * moon.factor);
+        sharanLayer = "Горни слоеве (Тежко налягане - заложете на Зиг-Риг! ☀️)";
+    } 
+    else {
+        // Преходни нормални стойности (между 1010-1012 и 1018-1020 hPa)
+        sharanPct = Math.round(60 * moon.factor);
+        sharanLayer = "Дъно / Прагове (Балансирано хранене)";
+    }
 
-            document.getElementById('act-pct-sharan').innerText = sharanPct + "%";
-            document.getElementById('act-bar-sharan').style.width = sharanPct + "%";
-            document.getElementById('act-layer-sharan').innerText = sharanLayer;
-            document.getElementById('act-pct-amur').innerText = amurPct + "%";
-            document.getElementById('act-bar-amur').style.width = amurPct + "%";
-            document.getElementById('act-layer-amur').innerText = amurLayer;
-            document.getElementById('act-pct-biala').innerText = bialaPct + "%";
-            document.getElementById('act-bar-biala').style.width = bialaPct + "%";
-            document.getElementById('act-layer-biala').innerText = bialaLayer;
-            document.getElementById('act-pct-karakuda').innerText = karakudaPct + "%";
-            document.getElementById('act-bar-karakuda').style.width = karakudaPct + "%";
-        }
+    // ЛОГИКА ЗА АМУР, БЯЛА РИБА И КАРАКУДА
+    let amurPct = 40, amurLayer = "Дъно";
+    if (w.temp > 22) { amurPct = 90; amurLayer = (w.condition.indexOf("Слънчево") !== -1) ? "Зиг-Риг (☀️)" : "Средни слоеве"; }
+    
+    let bialaPct = Math.round(50 * moon.factor), bialaLayer = "Дъно";
+    if (w.pressure < 1010) { bialaPct = Math.round(85 * moon.factor); bialaLayer = "Средни слоеве / Прагове"; }
+    
+    let karakudaPct = 60, karakudaLayer = "Дъно";
+    if (w.temp > 15) karakudaPct = 75;
+
+    // Защита: Ограничаваме процентите до максимум 100% при силен лунен фактор
+    if(sharanPct > 100) sharanPct = 100; 
+    if(bialaPct > 100) bialaPct = 100;
+
+    // РЕНДИРАНЕ НА ДАННИТЕ НА ЕКРАНА (ПЪЛНО СЪВПАДЕНИЕ С ТВОЯ ИНТЕРФЕЙС)
+    document.getElementById('act-pct-sharan').innerText = sharanPct + "%";
+    document.getElementById('act-bar-sharan').style.width = sharanPct + "%";
+    document.getElementById('act-layer-sharan').innerText = sharanLayer;
+    
+    document.getElementById('act-pct-amur').innerText = amurPct + "%";
+    document.getElementById('act-bar-amur').style.width = amurPct + "%";
+    document.getElementById('act-layer-amur').innerText = amurLayer;
+    
+    document.getElementById('act-pct-biala').innerText = bialaPct + "%";
+    document.getElementById('act-bar-biala').style.width = bialaPct + "%";
+    document.getElementById('act-layer-biala').innerText = bialaLayer;
+    
+    document.getElementById('act-pct-karakuda').innerText = karakudaPct + "%";
+    document.getElementById('act-bar-karakuda').style.width = karakudaPct + "%";
+}
 
         function generateSmartRecommendation(w, moon) {
             let rec = "";
