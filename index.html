@@ -34,13 +34,14 @@
         .fish-bar-bg { background: #121824; height: 8px; border-radius: 4px; width: 100%; overflow: hidden; position: relative; }
         .fish-bar-fill { background: var(--accent-color); height: 100%; width: 0%; transition: width 0.5s ease-in-out; }
         .fish-layer-badge { font-size: 11px; color: #60a5fa; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-        .recommendation-box { background: linear-gradient(135deg, #1e3a8a, #1e40af); border-left: 4px solid #3b82f6; padding: 12px; border-radius: 8px; margin-top: 10px; line-height: 1.4; }
+        .recommendation-box { background: linear-gradient(135deg, #111827, #1f2937); border-left: 4px solid var(--gold-color); padding: 12px; border-radius: 8px; margin-top: 10px; line-height: 1.5; }
         .form-group { margin-bottom: 15px; }
         .form-label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
         .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
         .tag-btn { background-color: #222d42; border: 1px solid var(--border-color); color: var(--text-color); padding: 8px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; }
         .tag-btn.active { background-color: var(--accent-color); color: #000; font-weight: bold; border-color: var(--accent-color); }
         .input-text { width: 100%; background-color: #222d42; border: 1px solid var(--border-color); color: var(--text-color); padding: 10px; border-radius: 8px; font-size: 14px; outline: none; }
+        .btn-submit { width: 100%; background-color: var(--accent-color); color: #000; font-weight: bold; border: none; padding: 12px; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 10px; }
         .leaderboard-item { display: flex; align-items: center; background: #222d42; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--gold-color); gap: 12px; }
         .leaderboard-rank { font-size: 18px; font-weight: bold; color: var(--gold-color); min-width: 25px; text-align: center; }
         .leaderboard-img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background: #121824; border: 1px solid var(--border-color); }
@@ -100,15 +101,17 @@
                 <div id="leaderboard-list"><p style="color:var(--text-muted); text-align:center; padding:10px; font-size:12px;">Няма записани трофеи.</p></div>
             </div>
 
-            <div class="card">
-                <div class="card-title"><span>⏱️ Времето и Луната на язовира</span><button onclick="fetchWeather()" style="background:none; border:none; color:var(--accent-color); cursor:pointer;">Обнови 🔄</button></div>
-                <div class="weather-grid">
-                    <div class="weather-item"><span class="weather-label">Атм. Налягане</span><span class="weather-value" id="w-pressure">-- hPa</span></div>
+            <div class="card" style="border: 1px solid var(--accent-color);">
+                <div class="card-title" style="color: var(--accent-color);">⏱️ Времето и Смарт Препоръка за стръв</div>
+                <div class="weather-grid" style="margin-bottom: 12px;">
+                    <div class="weather-item"><span class="weather-label">Атм. Налягане (Морско)</span><span class="weather-value" id="w-pressure">-- hPa</span></div>
                     <div class="weather-item"><span class="weather-label">Температура</span><span class="weather-value" id="w-temp">-- °C</span></div>
                     <div class="weather-item"><span class="weather-label">Вятър</span><span class="weather-value" id="w-wind">-- м/с</span></div>
                     <div class="weather-item" style="border: 1px solid #3b82f6;"><span class="weather-label">Лунна фаза</span><span class="weather-value" id="w-moon" style="color: #60a5fa; font-size: 13px;">Пресмятане...</span></div>
                 </div>
-                <div class="recommendation-box"><strong style="color: #60a5fa; display:block; margin-bottom: 4px;">🤖 Анализ на уловите:</strong><span id="smart-recommendation">Зареждане...</span></div>
+                <div class="recommendation-box">
+                    <div id="smart-recommendation" style="font-size: 13px; color: #cbd5e1;">Зареждане на изкуствения интелект...</div>
+                </div>
             </div>
 
             <div class="card">
@@ -132,15 +135,14 @@
                     <div class="fish-row">
                         <div class="fish-main-info"><span>Crucian / Каракуда</span><span id="act-pct-karakuda">--%</span></div>
                         <div class="fish-bar-bg"><div class="fish-bar-fill" id="act-bar-karakuda"></div></div>
-                        <div class="fish-layer-badge">🎯 Перфектен слой: <span id="act-layer-karakuda" style="font-weight: bold; color: #fff;">--</span></div>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-title"><span>📍 Сателитна карта на сектора</span><a href="https://maps.google.com/..." target="_blank" style="color:var(--accent-color); text-decoration:none; font-size:12px; border:1px solid var(--border-color); padding:2px 6px; border-radius:4px; background:#121824;">Цял Екран 🗺️</a></div>
+                <div class="card-title"><span>📍 Сателитна карта на сектора</span><a href="https://maps.google.com/?q=43.4122,24.8411" target="_blank" style="color:var(--accent-color); text-decoration:none; font-size:12px; border:1px solid var(--border-color); padding:2px 6px; border-radius:4px; background:#121824;">Цял Екран 🗺️</a></div>
                 <div style="width: 100%; height: 220px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); position: relative;">
-                    <iframe width="100%" height="100%" frameborder="0" style="border:0;" src="https://maps.google.com/maps?q=43.4122,24.8411&t=k&z=17&output=embed" allowfullscreen></iframe>
+                    <iframe width="100%" height="100%" frameborder="0" style="border:0;" src="https://maps.google.com/?ie=UTF8&t=k&ll=43.4122,24.8411&spn=0.005,0.005&z=17&output=embed" allowfullscreen></iframe>
                 </div>
             </div>
 
@@ -148,11 +150,6 @@
                 <div class="card-title" style="color: var(--admin-color);"><span>🕵️‍♂️ Тайният VIP Радар ("Чийтърски режим")</span><span style="font-size: 10px; background: var(--admin-color); color:white; padding:2px 6px; border-radius:10px;">LIVE</span></div>
                 <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Всички улови на гьола в реално време!</p>
                 <div id="admin-radar-list"><p style="color:var(--text-muted); text-align:center; padding:10px; font-size:12px;">Няма нови улови.</p></div>
-            </div>
-
-            <div class="card">
-                <div class="card-title">📊 Съвпадение от твоята history</div>
-                <div id="history-match-box" style="font-size: 13px; line-height: 1.4; color: #cbd5e1;">Няма излети за сравнение.</div>
             </div>
         </div>
 
@@ -267,19 +264,13 @@
         function executeAppLogin() {
             const nameInput = document.getElementById('login-name-input').value.trim();
             const passInput = document.getElementById('login-pass-input').value.trim();
-            
             if(!nameInput) { alert("Моля, въведете име!"); return; }
 
             const nameLower = nameInput.toLowerCase();
-            
-            // 🛡️ ХАРДУЕРНА ПРОВЕРКА НА ПАРОЛИТЕ ЗА VIP СИГУРНОСТ
             if (nameLower === "павел хършев") {
                 if (passInput !== "1") { alert("Грешна парола за профил Павел Хършев!"); return; }
             } else if (nameLower === "влади" || nameLower === "владко") {
                 if (passInput !== "2") { alert("Грешна парола за VIP профил!"); return; }
-            } else if (nameLower === "павел") {
-                // Адашът влиза без парола, но системата го маркира като обикновен потребител
-                console.log("Обикновен потребител адаш.");
             }
 
             currentUser = nameInput;
@@ -308,9 +299,7 @@
 
         function updateUserUI() {
             const nameLower = currentUser.toLowerCase();
-            // Само пълното име "Павел Хършев" отключва чийта
             const isAdmin = (nameLower === "павел хършев" || nameLower === "влади" || nameLower === "владко");
-            
             document.getElementById('current-user-display').innerText = currentUser + (isAdmin ? " (VIP)" : "");
             if (isAdmin) {
                 document.body.classList.add('is-admin');
@@ -347,6 +336,7 @@
         }
 
         function fetchWeather() {
+            // ИЗПОЛЗВАМЕ ТАКТИЧЕСКОТО ПРИВЕДЕНО НАЛЯГАНЕ (pressure_msl) ЗА СЪВПАДЕНИЕ С ТЕЛЕФОНИТЕ СЛЕД ТЕСТА ТИ
             const url = "https://api.open-meteo.com/v1/forecast?latitude=43.4122&longitude=24.8411&current=temperature_2m,pressure_msl,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto";
             const moonInfo = calculateMoonPhase(new Date());
             document.getElementById('w-moon').innerText = moonInfo.text;
@@ -368,120 +358,151 @@
                         document.getElementById('w-temp').innerText = temp + " °C";
                         document.getElementById('w-pressure').innerText = pressure + " hPa";
                         document.getElementById('w-wind').innerText = wind + " м/с";
-                        document.getElementById('w-condition').innerText = condition;
                     }
-                    generateSmartRecommendation(currentWeatherData, moonInfo);
                     calculateFishActivityAndLayers(currentWeatherData, moonInfo);
+                    runSmartAnalysis();
                 }).catch(() => {
-                    generateSmartRecommendation(currentWeatherData, moonInfo);
                     calculateFishActivityAndLayers(currentWeatherData, moonInfo);
+                    runSmartAnalysis();
                 });
         }
 
-       function calculateFishActivityAndLayers(w, moon) {
-    let sharanPct = 55, sharanLayer = "Дъно";
+        function calculateFishActivityAndLayers(w, moon) {
+            let sharanPct = 55, sharanLayer = "Дъно";
 
-    // 🏆 ПРОФЕСИОНАЛНА ШАРАНДЖИЙСКА ЛОГИКА ЗА АТМОСФЕРНО НАЛЯГАНЕ
-    if (w.pressure >= 1013 && w.pressure <= 1017) {
-        // Златната зона: Перфектно стабилно налягане - рибата е спокойна на дъното
-        sharanPct = Math.round(95 * moon.factor); 
-        sharanLayer = "Дъно (🥇 Идеално налягане! Рибата се храни активно)";
-    } 
-    else if (w.pressure < 1010) {
-        // Бърз спад преди буря: Агресивно, паническо хранене
-        sharanPct = Math.round(85 * moon.factor); 
-        sharanLayer = "Дъно (Активно хранене преди фронт! 📉)";
-    } 
-    else if (w.pressure > 1020) {
-        // Прекалено високо налягане: Натиска мехура и я вдига нагоре
-        sharanPct = Math.round(45 * moon.factor);
-        sharanLayer = "Горни слоеве (Тежко налягане - заложете на Зиг-Риг! ☀️)";
-    } 
-    else {
-        // Преходни нормални стойности (между 1010-1012 и 1018-1020 hPa)
-        sharanPct = Math.round(60 * moon.factor);
-        sharanLayer = "Дъно / Прагове (Балансирано хранене)";
-    }
+            // НАПЪЛНО ОБНОВЕНА КОРЕКТНА ШАРАНДЖИЙСКА СКАЛА (MSL) СЛЕД НАШИЯ РАЗГОВОР
+            if (w.pressure >= 1013 && w.pressure <= 1017) {
+                sharanPct = Math.round(95 * moon.factor); 
+                sharanLayer = "Дъно (🥇 Златна зона! Рибата е спокойна и се храни активно)";
+            } else if (w.pressure < 1010) {
+                sharanPct = Math.round(85 * moon.factor); 
+                sharanLayer = "Дъно (Активно, паническо хранене преди фронт! 📉)";
+            } else if (w.pressure > 1020) {
+                sharanPct = Math.round(45 * moon.factor);
+                sharanLayer = "Горни слоеве (Тежко налягане - заложете на Зиг-Риг! ☀️)";
+            } else {
+                sharanPct = Math.round(60 * moon.factor);
+                sharanLayer = "Дъно / Прагове (Балансирано поведение)";
+            }
 
-    // ЛОГИКА ЗА АМУР, БЯЛА РИБА И КАРАКУДА
-    let amurPct = 40, amurLayer = "Дъно";
-    if (w.temp > 22) { amurPct = 90; amurLayer = (w.condition.indexOf("Слънчево") !== -1) ? "Зиг-Риг (☀️)" : "Средни слоеве"; }
-    
-    let bialaPct = Math.round(50 * moon.factor), bialaLayer = "Дъно";
-    if (w.pressure < 1010) { bialaPct = Math.round(85 * moon.factor); bialaLayer = "Средни слоеве / Прагове"; }
-    
-    let karakudaPct = 60, karakudaLayer = "Дъно";
-    if (w.temp > 15) karakudaPct = 75;
+            let amurPct = 40, amurLayer = "Дъно";
+            if (w.temp > 22) { amurPct = 90; amurLayer = (w.condition.indexOf("Слънчево") !== -1) ? "Зиг-Риг (☀️)" : "Средни слоеве"; }
+            let bialaPct = Math.round(50 * moon.factor), bialaLayer = "Дъно";
+            if (w.pressure < 1010) { bialaPct = Math.round(85 * moon.factor); bialaLayer = "Средни слоеве / Прагове"; }
+            let karakudaPct = 60;
+            if (w.temp > 15) karakudaPct = 75;
 
-    // Защита: Ограничаваме процентите до максимум 100% при силен лунен фактор
-    if(sharanPct > 100) sharanPct = 100; 
-    if(bialaPct > 100) bialaPct = 100;
+            if(sharanPct > 100) sharanPct = 100; if(bialaPct > 100) bialaPct = 100;
 
-    // РЕНДИРАНЕ НА ДАННИТЕ НА ЕКРАНА (ПЪЛНО СЪВПАДЕНИЕ С ТВОЯ ИНТЕРФЕЙС)
-    document.getElementById('act-pct-sharan').innerText = sharanPct + "%";
-    document.getElementById('act-bar-sharan').style.width = sharanPct + "%";
-    document.getElementById('act-layer-sharan').innerText = sharanLayer;
-    
-    document.getElementById('act-pct-amur').innerText = amurPct + "%";
-    document.getElementById('act-bar-amur').style.width = amurPct + "%";
-    document.getElementById('act-layer-amur').innerText = amurLayer;
-    
-    document.getElementById('act-pct-biala').innerText = bialaPct + "%";
-    document.getElementById('act-bar-biala').style.width = bialaPct + "%";
-    document.getElementById('act-layer-biala').innerText = bialaLayer;
-    
-    document.getElementById('act-pct-karakuda').innerText = karakudaPct + "%";
-    document.getElementById('act-bar-karakuda').style.width = karakudaPct + "%";
-}
-
-        function generateSmartRecommendation(w, moon) {
-            let rec = "";
-            if(moon.val >= 0.47 && moon.val < 0.53) rec = "🌕 Луната е в Пълнолуние! Очаквай силни рън-ове на едър шаран през цялата нощ.";
-            else if (w.pressure < 1010) rec = "Налягането пада! Рибата слиза долу. Използвайте ярки флуоро цветове и тежък месен аромат.";
-            else rec = "Балансирано време. Подходящо за тактика с Метод фидер и аромат Чесън или Скопекс.";
-            document.getElementById('smart-recommendation').innerText = rec;
-            analyzePatternMatching(w);
+            document.getElementById('act-pct-sharan').innerText = sharanPct + "%";
+            document.getElementById('act-bar-sharan').style.width = sharanPct + "%";
+            document.getElementById('act-layer-sharan').innerText = sharanLayer;
+            document.getElementById('act-pct-amur').innerText = amurPct + "%";
+            document.getElementById('act-bar-amur').style.width = amurPct + "%";
+            document.getElementById('act-layer-amur').innerText = amurLayer;
+            document.getElementById('act-pct-biala').innerText = bialaPct + "%";
+            document.getElementById('act-bar-biala').style.width = bialaPct + "%";
+            document.getElementById('act-layer-biala').innerText = bialaLayer;
+            document.getElementById('act-pct-karakuda').innerText = karakudaPct + "%";
+            document.getElementById('act-bar-karakuda').style.width = karakudaPct + "%";
         }
 
         // ==========================================
-        // 🎣 МОДУЛ 3: FIREBASE БАЗА, ЗВУК, СНИМКИ И АНОНИМЕН БРОЯЧ
+        // 🎣 МОДУЛ 3: ОБЕДИНЕН АИ МОДУЛ И FIREBASE БАЗА
         // ==========================================
+        
+        // 🔥 НОВИЯТ КОМБИНИРАН СОФТУЕРЕН ИНТЕЛЕКТ (ВАРЯНТ 1 + ВАРЯНТ 2)
+        function runSmartAnalysis() {
+            if (!currentWeatherData) return;
+            const w = currentWeatherData;
+            
+            // --- 🧪 ЧАСТ A: НАУЧЕН И БИОЛОГИЧЕН АНАЛИЗ (ВАРЯНТ 1) ---
+            let scientificRec = "💡 <strong>Научен тактически анализ:</strong><br>";
+            
+            // Анализ според температурата (Метаболизъм)
+            if (w.temp < 12) {
+                scientificRec += "• 🥶 Студена вода: Шаранът е с бавен метаболизъм. Заложете на дребна, силно атрактивна стръв (8-10мм дъмбели) и високо разтворими пикантни/алкохолни аромати (Чесън, Подправки, Цитрус). Избягвайте мазни рибни масла.<br>";
+            } else if (w.temp >= 12 && w.temp <= 21) {
+                scientificRec += "• 🌤️ Преходен сезон: Балансирани условия. Рибата се движи активно. Подходяща тактика е Метод фидер или прецизно дънно петно с класически плодови и сладки миризми (Скопекс, Ягода, Шоколад).<br>";
+            } else {
+                scientificRec += "• 🔥 Жега: Водата е топла, шаранът се храни тежко. Използвайте едра, силно хранителна протеинова стръв (20мм твърди топчета, пелети) и мазни, вкиснати или брутални месни аромати (Monster Crab, Сепия, Риба). За Амура – царевица или плодов контраст.<br>";
+            }
+            
+            // Анализ според налягането (Слоеве на водата)
+            if (w.pressure > 1020) {
+                scientificRec += "• 🎈 Тежко високо налягане: Натиска мехура на рибата и я вади в горните слоеве. Дънният риболов ще е критично труден! <strong>Силно препоръчително е превключването на Зиг-Риг (Zig-Rig)</strong> с ярка жълта/черна пяна или поп-ъп.<br>";
+            } else if (w.pressure < 1010) {
+                scientificRec += "• ⛈️ Падащ барометър: Шараните слизат плътно на дъното и започват агресивно паническо хранене преди фронта. Слагайте силно дипната стръв с ярък флуоро акцент!<br>";
+            } else if (w.pressure >= 1013 && w.pressure <= 1017) {
+                scientificRec += "• 🥇 Златна зона (1013-1017): Перфектна стабилност. Рибата е спокойна и застава продължително върху петна от тежка захранка на дъното.<br>";
+            }
+
+            // --- 📊 ЧАСТ Б: ИЗКУСТВЕН ИНТЕЛЕКТ ОТ ВАШАТА ИСТОРИЯ (ВАРЯНТ 2) ---
+            let statsRec = "<br>📊 <strong>Жива статистика от базата данни на Садина:</strong><br>";
+            
+            // Търсим улови в диапазон +/- 4 hPa налягане и +/- 4 градуса температура
+            let matchingCatches = allCatches.filter(c => 
+                Math.abs(c.weather_pressure - w.pressure) <= 4 && 
+                Math.abs(c.weather_temp - w.temp) <= 4
+            );
+            
+            // Ако няма точни съвпадения по време, вземаме общата статистика, за да изчислим хита на гьола
+            let targetCatches = matchingCatches.length > 0 ? matchingCatches : allCatches;
+            
+            if (targetCatches.length > 0) {
+                let baits = {}, flavors = {}, colors = {}, sizes = {};
+                targetCatches.forEach(c => {
+                    if(c.baittype) baits[c.baittype] = (baits[c.baittype] || 0) + 1;
+                    if(c.flavor) flavors[c.flavor] = (flavors[c.flavor] || 0) + 1;
+                    if(c.color) colors[c.color] = (colors[c.color] || 0) + 1;
+                    if(c.size) sizes[c.size] = (sizes[c.size] || 0) + 1;
+                });
+                
+                const getTop = (obj) => Object.keys(obj).reduce((a, b) => obj[a] > obj[b] ? a : b);
+                
+                let topBait = getTop(baits) || "Топче";
+                let topFlavor = getTop(flavors) || "Шоколад";
+                let topColor = getTop(colors) || "Жълт";
+                let topSize = getTop(sizes) || "14мм";
+                
+                if (matchingCatches.length > 0) {
+                    statsRec += `🎯 При тези метеорологични условия на язовира най-много удари имате на: <span style="color:var(--gold-color); font-weight:bold;">${topSize} ${topBait} (Цвят: ${topColor}, Аромат: ${topFlavor})</span>. Това е доказаният убиец за деня!`;
+                } else {
+                    statsRec += `ℹ️ Няма директно засичане на времето в историята. Абсолютният хит на Садина до момента е: <span style="color:var(--accent-color); font-weight:bold;">${topSize} ${topBait} (${topFlavor})</span>.`;
+                }
+            } else {
+                statsRec += "ℹ️ Базата данни на Firebase е празна в момента. Запишете първите улови на излета, за да започне AI да пресмята процентите!";
+            }
+            
+            // Наливаме събраните данни в кутията
+            document.getElementById('smart-recommendation').innerHTML = scientificRec + statsRec;
+        }
+
         function startPresenceHeartbeat() {
             if (!db || !currentUser) return;
             const userDocRef = db.collection("sadina_presence").doc(currentUser.toLowerCase());
-            
             const reportPresence = () => {
-                userDocRef.set({
-                    username: currentUser,
-                    last_active: Date.now()
-                }).catch(e => console.log("Presence Error:", e));
+                userDocRef.set({ username: currentUser, last_active: Date.now() }).catch(e => console.log(e));
             };
-            
             reportPresence();
             setInterval(reportPresence, 15000);
             listenToOnlineUsers();
         }
 
-        // 🛡️ АНОНИМЕН МОДУЛ: ПОКАЗВА САМО БРОЙКА, КРИЕ ИМЕНАТА НА 100%
+        // АНОНИМЕН БРОЯЧ: ПО БАРАРАНЕ НА ШЕФА ПОКАЗВА САМО БРОЙКА, КРИЕ ИМЕНАТА ЗА СИГУРНОСТ
         function listenToOnlineUsers() {
             if (!db) return;
             db.collection("sadina_presence").onSnapshot((snapshot) => {
                 const listDiv = document.getElementById('online-users-list');
                 if(!listDiv) return;
-                listDiv.innerHTML = "";
-                let count = 0;
-                const now = Date.now();
-                
+                let count = 0; const now = Date.now();
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    if (data.last_active && (now - data.last_active < 45000)) {
-                        count++;
-                    }
+                    if (data.last_active && (now - data.last_active < 45000)) count++;
                 });
-                
                 listDiv.innerHTML = `
                     <span class="badge-user-tag" style="background: #2980b9; color: white; padding: 6px 12px; font-size: 13px; margin-left: 0; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; font-weight: bold;">
-                        🟢 В момента на водоема: ${count} ${count === 1 ? 'рибар' : 'рибари'}
+                        🟢 На линия в момента: ${count} ${count === 1 ? 'рибар' : 'рибари'}
                     </span>
                 `;
             });
@@ -500,21 +521,16 @@
             try {
                 if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioContext.state === 'suspended') audioContext.resume();
-                
                 let time = audioContext.currentTime;
                 for (let i = 0; i < 8; i++) {
-                    let osc = audioContext.createOscillator(); 
-                    let gain = audioContext.createGain();
-                    osc.type = 'square'; 
-                    osc.frequency.setValueAtTime(1450, time + i * 0.09); 
+                    let osc = audioContext.createOscillator(); let gain = audioContext.createGain();
+                    osc.type = 'square'; osc.frequency.setValueAtTime(1450, time + i * 0.09); 
                     gain.gain.setValueAtTime(0.3, time + i * 0.09);
                     gain.gain.exponentialRampToValueAtTime(0.01, time + i * 0.09 + 0.07);
-                    osc.connect(gain); 
-                    gain.connect(audioContext.destination);
-                    osc.start(time + i * 0.09); 
-                    osc.stop(time + i * 0.09 + 0.07);
+                    osc.connect(gain); gain.connect(audioContext.destination);
+                    osc.start(time + i * 0.09); osc.stop(time + i * 0.09 + 0.07);
                 }
-            } catch(e) { console.log(e); }
+            } catch(e) {}
         }
 
         function compressAndHandlePhoto(input) {
@@ -600,19 +616,6 @@
             }
         }
 
-        function analyzePatternMatching(w) {
-            const myCatches = allCatches.filter(c => c.user.toLowerCase() === currentUser.toLowerCase());
-            const matches = myCatches.filter(c => Math.abs(c.weather_pressure - w.pressure) <= 3);
-            const matchBox = document.getElementById('history-match-box');
-            if(!matchBox) return;
-            if(matches.length > 0) {
-                let lastBest = matches[matches.length - 1];
-                matchBox.innerHTML = `💡 <strong>Историческо съвпадение!</strong> При налягане ${w.pressure} hPa ти преди хвана ${lastBest.fish} на стръв: ${lastBest.size} ${lastBest.baittype} (${lastBest.flavor}).`;
-            } else {
-                matchBox.innerHTML = `ℹ️ Няма записани твои улови в базата при налягане около ${w.pressure} hPa.`;
-            }
-        }
-
         function renderData() {
             const personalList = document.getElementById('personal-diary-list');
             const adminRadarList = document.getElementById('admin-radar-list');
@@ -665,7 +668,9 @@
 
             if (personalList && personalList.innerHTML === "") personalList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:20px;'>Твоят дневник е празен.</p>";
             if (adminRadarList && !hasOthers) adminRadarList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:10px; font-size:12px;'>Радарът е тих.</p>";
-            if(currentWeatherData) analyzePatternMatching(currentWeatherData);
+            
+            // Задействаме новия супер AI анализ веднага щом данните се рендират
+            runSmartAnalysis();
         }
 
         function setSelect(groupId, btn) { document.querySelectorAll(`#${groupId} .tag-btn`).forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
