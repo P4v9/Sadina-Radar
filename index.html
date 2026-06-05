@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Садина Смарт Риболов - LIVE</title>
-    <!-- Firebase SDK (Compat версии за директна работа в един файл) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
@@ -356,7 +355,6 @@
             display: block;
         }
 
-        /* АДМИНИСТРАТОРСКИ РЕЖИМ (ЧИЙТ) СЕ ПРАВИ ОНЛАЙН */
         .admin-only {
             display: none;
         }
@@ -373,7 +371,6 @@
             margin-left: 5px;
         }
 
-        /* ЕКРАН ЗА ВХОД */
         #login-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -388,7 +385,6 @@
 </head>
 <body>
 
-    <!-- НОВИЯТ ЕКРАН ЗА АВТЕНТИКАЦИЯ -->
     <div id="login-overlay">
         <div class="card" style="width: 100%; max-width: 400px; text-align: center; border-color: var(--accent-color);">
             <h2 style="color: var(--text-color); margin-bottom: 8px;">Садина Смарт Риболов</h2>
@@ -406,10 +402,8 @@
 
     <div class="container">
         
-        <!-- VIEW 1: DASHBOARD -->
         <div id="view-dashboard" class="view active">
             
-            <!-- КАРТА 1: ТОП ТРОФЕИ -->
             <div class="card" style="border: 1px solid var(--gold-color);">
                 <div class="card-title" style="color: var(--gold-color);">🏆 ТОП ТРОФЕИ (Най-голяма риба най-отгоре)</div>
                 <div id="leaderboard-list">
@@ -417,7 +411,6 @@
                 </div>
             </div>
 
-            <!-- КАРТА 2: МЕТЕОРОЛОГИЯ + СОЛУНАРЕН ФАКТОР -->
             <div class="card">
                 <div class="card-title">
                     <span>⏱️ Времето и Луната на язовира</span>
@@ -436,7 +429,6 @@
                         <span class="weather-label">Вятър</span>
                         <span class="weather-value" id="w-wind">-- м/с</span>
                     </div>
-                    <!-- НОВО: СОЛУНАРЕН ИНДИКАТОР В ГРИДА -->
                     <div class="weather-item" style="border: 1px solid #3b82f6;">
                         <span class="weather-label">Лунна фаза</span>
                         <span class="weather-value" id="w-moon" style="color: #60a5fa; font-size: 13px;">Изчисляване...</span>
@@ -448,7 +440,6 @@
                 </div>
             </div>
 
-            <!-- КАРТА 3: ИНДЕКС ЗА АКТИВНОСТ И СЛОЕВЕ -->
             <div class="card">
                 <div class="card-title">🐟 Активност и Слоеве на рибата (Изчислено на живо)</div>
                 <div class="activity-container">
@@ -475,18 +466,16 @@
                 </div>
             </div>
 
-            <!-- КАРТА 4: ИНТЕРАКТИВНА САТЕЛИТНА КАРТА -->
             <div class="card">
                 <div class="card-title">
                     <span>📍 Сателитна карта на сектора</span>
-                    <a href="https://www.google.com/maps/search/?api=1&query=43.4122,24.8411" target="_blank" style="color:var(--accent-color); text-decoration:none; font-size:12px; border:1px solid var(--border-color); padding:2px 6px; border-radius:4px; background:#121824;">Отвори в Maps 🗺️</a>
+                    <a href="https://maps.google.com/?q=43.4122,24.8411&t=h" target="_blank" style="color:var(--accent-color); text-decoration:none; font-size:12px; border:1px solid var(--border-color); padding:2px 6px; border-radius:4px; background:#121824;">Отвори в Maps 🗺️</a>
                 </div>
                 <div style="width: 100%; height: 220px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); position: relative;">
-                    <iframe width="100%" height="100%" frameborder="0" style="border:0;" src="https://maps.google.com/maps?q=43.4122,24.8411&z=16&t=h&output=embed" allowfullscreen></iframe>
+                    <iframe width="100%" height="100%" frameborder="0" style="border:0;" src="https://maps.google.com/?q=43.4122,24.8411&t=h&output=embed" allowfullscreen></iframe>
                 </div>
             </div>
 
-            <!-- VIP SECRET RADAR SECTION (ХИДЕН ЗА СТРАНИЧНИ ХОРА) -->
             <div class="card admin-only">
                 <div class="card-title" style="color: var(--admin-color);">
                     <span>🕵️‍♂️ Тайният VIP Радар ("Чийтърски режим")</span>
@@ -504,7 +493,6 @@
             </div>
         </div>
 
-        <!-- VIEW 2: LOG CATCH -->
         <div id="view-log" class="view">
             <div class="card">
                 <div class="card-title">🎣 Запиши нов улов в Firebase</div>
@@ -582,7 +570,6 @@
             </div>
         </div>
 
-        <!-- VIEW 3: HISTORY DIARY -->
         <div id="view-diary" class="view">
             <div class="card">
                 <div class="card-title">📖 Твоят личен дневник (От Firebase)</div>
@@ -619,16 +606,15 @@
         
         let db = null;
         let currentUser = localStorage.getItem('sadina_user') || "";
-        let currentWeatherData = { temp: 22, pressure: 1012, wind: 3, condition: "Слънчево", code: 0 };
+        let currentWeatherData = { temp: 24, pressure: 1012, wind: 2.5, condition: "Слънчево", code: 0 };
         let allCatches = [];
         let globalBase64Photo = "";
-        let isInitialLoad = true; // Спира алармата при първото стартиране на базата
+        let isInitialLoad = true;
 
         window.onload = function() {
             checkUserSession();
         };
 
-        // СИСТЕМА ЗА СЕСИЯ И ЛОГВАНЕ
         function checkUserSession() {
             if (currentUser && currentUser.trim() !== "") {
                 document.getElementById('login-overlay').style.display = 'none';
@@ -681,17 +667,15 @@
             }
         }
 
-        // НОВО: СИНТЕТИЗАТОР НА СИГНАЛИЗАТОР ЗА РЪН (Web Audio API)
         function playBiteAlarmSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 let time = audioCtx.currentTime;
-                // Имитираме Fox/Delkim бързи 7 изпищявания за бягаща риба
                 for (let i = 0; i < 7; i++) {
                     let osc = audioCtx.createOscillator();
                     let gain = audioCtx.createGain();
                     osc.type = 'square'; 
-                    osc.frequency.setValueAtTime(1350, time + i * 0.12); // Висок пронизващ звук
+                    osc.frequency.setValueAtTime(1350, time + i * 0.12); 
                     gain.gain.setValueAtTime(0.25, time + i * 0.12);
                     gain.gain.exponentialRampToValueAtTime(0.01, time + i * 0.12 + 0.08);
                     osc.connect(gain);
@@ -699,21 +683,20 @@
                     osc.start(time + i * 0.12);
                     osc.stop(time + i * 0.12 + 0.08);
                 }
-            } catch(e) { console.log("Audio block context disabled", e); }
+            } catch(e) { console.log("Audio layout blocked", e); }
         }
 
-        // НОВО: МАТЕМАТИЧЕСКИ СОЛУНАРЕН МОДЕЛ ЗА ФАЗА НА ЛУНАТА
         function calculateMoonPhase(date) {
             let lp = 2551443; 
             let newMoon = new Date(1970, 0, 7, 20, 35, 0);
             let phase = ((date.getTime() - newMoon.getTime()) / 1000) % lp;
-            let res = phase / lp; // Дава число от 0 до 1
+            let res = phase / lp; 
             
-            if (res < 0.03 || res > 0.97) return { text: "🌑 Нова Луна", val: res, factor: 1.15 }; // Топ за хищник
+            if (res < 0.03 || res > 0.97) return { text: "🌑 Нова Луна", val: res, factor: 1.15 }; 
             if (res >= 0.03 && res < 0.22) return { text: "🌒 Нарастващ полумесец", val: res, factor: 0.95 };
             if (res >= 0.22 && res < 0.28) return { text: "🌓 Първа Четвърт", val: res, factor: 1.00 };
             if (res >= 0.28 && res < 0.47) return { text: "🌔 Нарастваща луна", val: res, factor: 1.05 };
-            if (res >= 0.47 && res < 0.53) return { text: "🌕 Пълнолуние", val: res, factor: 1.20 }; // Супер активност нощем
+            if (res >= 0.47 && res < 0.53) return { text: "🌕 Пълнолуние", val: res, factor: 1.20 }; 
             if (res >= 0.53 && res < 0.72) return { text: "🌖 Намаляваща луна", val: res, factor: 1.00 };
             if (res >= 0.72 && res < 0.78) return { text: "🌗 Последна Четвърт", val: res, factor: 0.90 };
             return { text: "🌘 Намаляващ полумесец", val: res, factor: 0.95 };
@@ -758,6 +741,11 @@
 
         function fetchWeather() {
             const url = "https://api.open-meteo.com/v1/forecast?latitude=43.4122&longitude=24.8411&current=temperature_2m,surface_pressure,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto";
+            
+            // 🚀 СУПЕР ПОПРАВКА: Изчисляваме луната МИГНОВЕНО тук на автопилот, без да чакаме интернет!
+            const moonInfo = calculateMoonPhase(new Date());
+            document.getElementById('w-moon').innerText = moonInfo.text;
+
             fetch(url)
                 .then(res => res.json())
                 .then(data => {
@@ -778,21 +766,23 @@
                         document.getElementById('w-pressure').innerText = pressure + " hPa";
                         document.getElementById('w-wind').innerText = wind + " м/с";
                         document.getElementById('w-condition').innerText = condition;
-
-                        const moonInfo = calculateMoonPhase(new Date());
-                        document.getElementById('w-moon').innerText = moonInfo.text;
-
-                        generateSmartRecommendation(currentWeatherData, moonInfo);
-                        calculateFishActivityAndLayers(currentWeatherData, moonInfo);
                     }
-                }).catch(() => {
-                    const moonInfo = calculateMoonPhase(new Date());
+                    // Пускаме анализите винаги в точния момент
+                    generateSmartRecommendation(currentWeatherData, moonInfo);
+                    calculateFishActivityAndLayers(currentWeatherData, moonInfo);
+                }).catch((err) => {
+                    console.log("Метео API грешка - задействане на авариен профил:", err);
+                    document.getElementById('w-temp').innerText = "24 °C (Авто)";
+                    document.getElementById('w-pressure').innerText = "1012 hPa (Авто)";
+                    document.getElementById('w-wind').innerText = "2.0 м/с";
+                    document.getElementById('w-condition').innerText = "Слънчево";
+                    
+                    generateSmartRecommendation(currentWeatherData, moonInfo);
                     calculateFishActivityAndLayers(currentWeatherData, moonInfo);
                 });
         }
 
         function calculateFishActivityAndLayers(w, moon) {
-            // Базови сметки, умножени по солунарния лунен фактор
             let sharanPct = Math.round(55 * moon.factor), sharanLayer = "Дъно";
             if (w.pressure < 1010) { sharanPct = Math.round(85 * moon.factor); sharanLayer = "Дъно (Активно хранене! 📉)"; }
             else if (w.temp > 22 && w.condition === "Ясно/Слънчево") { sharanLayer = "Средни слоеве / Дъно"; }
@@ -806,7 +796,6 @@
             let karakudaPct = 60, karakudaLayer = "Дъно";
             if (w.temp > 15) { karakudaPct = 75; karakudaLayer = "Дъно (Шавари)"; }
 
-            // Ограничения до 100%
             if(sharanPct > 100) sharanPct = 100; if(bialaPct > 100) bialaPct = 100;
 
             document.getElementById('act-pct-sharan').innerText = sharanPct + "%";
@@ -835,6 +824,20 @@
                 rec = "Балансирано време. Подходящо за тактика с Метод фидер, малки 8-10мм стръвчета и аромат Чесън или Скопекс.";
             }
             document.getElementById('smart-recommendation').innerText = rec;
+            analyzePatternMatching(w);
+        }
+
+        function analyzePatternMatching(w) {
+            const myCatches = allCatches.filter(c => c.user === currentUser);
+            const matches = myCatches.filter(c => Math.abs(c.weather_pressure - w.pressure) <= 3);
+            const matchBox = document.getElementById('history-match-box');
+            
+            if(matches.length > 0) {
+                let lastBest = matches[matches.length - 1];
+                matchBox.innerHTML = `💡 <strong>Историческо съвпадение!</strong> При подобно налягане ти преди хвана <strong>${lastBest.fish}</strong> на стръв: <span style="color:var(--accent-color); font-weight:bold;">${lastBest.size} ${lastBest.baittype} (${lastBest.flavor})</span>. Препоръчително е да заложиш на това!`;
+            } else {
+                matchBox.innerHTML = `ℹ️ Няма записани твои улови в базата при налягане около ${w.pressure} hPa. Системата ще се научи веднага щом запишеш първата си риба.`;
+            }
         }
 
         function listenToFirebaseUpdates() {
@@ -843,13 +846,12 @@
             .onSnapshot((snapshot) => {
                 allCatches = [];
                 
-                // Проверяваме за реални промени и пускаме звука само при нов улов от ДРУГ човек
                 if (!isInitialLoad) {
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === "added") {
                             const newDoc = change.doc.data();
                             if (newDoc.username !== currentUser) {
-                                playBiteAlarmSound(); // СВИРИ СИГНАЛИЗАТОРА!
+                                playBiteAlarmSound(); 
                             }
                         }
                     });
@@ -963,6 +965,8 @@
 
             if (personalList.innerHTML === "") personalList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:20px;'>Твоят дневник е празен.</p>";
             if (!hasOthers) adminRadarList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:10px; font-size:12px;'>Радарът е тих.</p>";
+            
+            if(currentWeatherData) analyzePatternMatching(currentWeatherData);
         }
 
         function getActiveText(groupId) {
