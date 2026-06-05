@@ -1,45 +1,57 @@
 // 🔊 ГЛОБАЛЕН АУДИО МОДУЛ ЗА СИГНАЛИЗАТОРА
 let audioContext = null;
 
-// Функция, която отключва аудиото на телефона при първото пипане на екрана
+// Функцията изсвирва микро-звук при клик, за да отключи хардуерния канал на телефона
 function unlockAudio() {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioContext && audioContext.state === 'suspended') {
-        audioContext.resume();
-    }
+    try {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        
+        // ХИТЪР ТРИК: Пускаме супер слаб 0.01 сек пийп, за да излъжем Android/iOS, че потребителят слуша музика
+        let osc = audioContext.createOscillator();
+        let gain = audioContext.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1000, audioContext.currentTime);
+        gain.gain.setValueAtTime(0.001, audioContext.currentTime); // Почти до нула, неуловим за ухото
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.start();
+        osc.stop(audioContext.currentTime + 0.02);
+    } catch(e) { console.log("Аудиото не може да се зареди предварително:", e); }
 }
-// Закачаме отключването за абсолютно всяко докосване по екрана
+
+// Закачаме отключването за абсолютно всяко действие по екрана
 document.addEventListener('click', unlockAudio);
 document.addEventListener('touchstart', unlockAudio);
 
 function playBiteAlarmSound() {
     try {
-        // Проверяваме дали модулът е създаден
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
-        // Ако телефонът се опитва да го заспива, го събуждаме насила
         if (audioContext.state === 'suspended') {
             audioContext.resume();
         }
         
         let time = audioContext.currentTime;
-        // Автентичен звук на сигнализатор (7 бързи писъка при рън)
+        // Автентичен звук на бясна локомотивна тяга (7 бързи импулса)
         for (let i = 0; i < 7; i++) {
             let osc = audioContext.createOscillator();
             let gain = audioContext.createGain();
             osc.type = 'square'; 
-            osc.frequency.setValueAtTime(1350, time + i * 0.12); 
-            gain.gain.setValueAtTime(0.25, time + i * 0.12);
-            gain.gain.exponentialRampToValueAtTime(0.01, time + i * 0.12 + 0.08);
+            osc.frequency.setValueAtTime(1400, time + i * 0.10); 
+            gain.gain.setValueAtTime(0.3, time + i * 0.10);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + i * 0.10 + 0.07);
             osc.connect(gain); 
             gain.connect(audioContext.destination);
-            osc.start(time + i * 0.12); 
-            osc.stop(time + i * 0.12 + 0.08);
+            osc.start(time + i * 0.10); 
+            osc.stop(time + i * 0.10 + 0.07);
         }
-    } catch(e) { console.log("Аудиото беше блокирано от операционната система:", e); }
+    } catch(e) { console.log("Грешка при свирене:", e); }
 }
 
 function compressAndHandlePhoto(input) {
@@ -73,7 +85,14 @@ function listenToFirebaseUpdates() {
         if (!isInitialLoad) {
             snapshot.docChanges().forEach((change) => {
                 if (change.type === "added" && change.doc.data().username !== currentUser) {
-                    playBiteAlarmSound(); // СВИРИ СИГНАЛИЗАТОРА!
+                    
+                    // 1. АКТИВИРАМЕ ЗВУКА НА СИГНАЛИЗАТОРА
+                    playBiteAlarmSound(); 
+                    
+                    // 2. 🔥 ДОБАВЯМЕ И МОЩНА СИСТЕМНА ВИБРАЦИЯ НА ТЕЛЕФОНА (3 дълги пулса)
+                    if (navigator.vibrate) {
+                        navigator.vibrate([400, 150, 400, 150, 400]);
+                    }
                 }
             });
         }
@@ -193,8 +212,3 @@ function renderData() {
     if (personalList && personalList.innerHTML === "") personalList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:20px;'>Твоят дневник е празен.</p>";
     if (adminRadarList && !hasOthers) adminRadarList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:10px; font-size:12px;'>Радарът е тих.</p>";
 }
-
-function setSelect(groupId, btn) { document.querySelectorAll(`#${groupId} .tag-btn`).forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
-function toggleMultiSelect(btn) { btn.classList.toggle('active'); }
-function getActiveText(groupId) { const activeBtn = document.querySelector(`#${groupId} .tag-btn.active`); return activeBtn ? activeBtn.innerText : ""; }
-function getMultiActiveTexts(groupId) { const actives = []; document.querySelectorAll(`#${groupId} .tag-btn.active`).forEach(b => actives.push(b.innerText)); return actives; }
