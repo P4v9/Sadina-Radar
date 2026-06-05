@@ -86,6 +86,10 @@
     <div class="container">
         <!-- ТАБ 1: ТАБЛО -->
         <div id="view-dashboard" class="view active">
+            
+            <!-- 🔊 НОВ ХАРДУЕРЕН ТЕСТ БУТОН НАЙ-ОТГОРЕ -->
+            <button class="btn-submit" onclick="playBiteAlarmSound()" style="margin-top: 0; margin-bottom: 15px; background: #34495e; color: #fff; border: 1px solid var(--border-color); padding: 10px;">🔊 ТЕСТ СИГНАЛИЗАТОР (Натисни веднъж на телефона)</button>
+
             <div class="card" style="border: 1px solid var(--gold-color);">
                 <div class="card-title" style="color: var(--gold-color);">🏆 ТОП ТРОФЕИ (Най-голяма риба най-отгоре)</div>
                 <div id="leaderboard-list"><p style="color:var(--text-muted); text-align:center; padding:10px; font-size:12px;">Няма записани трофеи.</p></div>
@@ -223,13 +227,12 @@
         <div class="nav-item" onclick="switchView('diary', this)"><span class="nav-icon">📖</span><span>Дневник</span></div>
     </nav>
 
-    <!-- СИСТЕМНИ SDK БИБЛИОТЕКИ -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
         // ==========================================
-        // ⚙️ МОДУЛ 1: ГЛОБАЛНА КОНФИГУРАЦИЯ И СЕСИИ
+        // ⚙️ МОДУЛ 1: КОНФИГУРАЦИЯ И СЕСИИ
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyA2Ik2KCs3YN7e4lsb-rKxNjiILX_0tyng",
@@ -247,7 +250,6 @@
         let allCatches = [];
         let globalBase64Photo = "";
         let isInitialLoad = true;
-        let audioContext = null;
 
         function checkUserSession() {
             if (currentUser && currentUser.trim() !== "") {
@@ -394,11 +396,6 @@
             try {
                 if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioContext.state === 'suspended') audioContext.resume();
-                let osc = audioContext.createOscillator(); let gain = audioContext.createGain();
-                osc.type = 'sine'; osc.frequency.setValueAtTime(1000, audioContext.currentTime);
-                gain.gain.setValueAtTime(0.001, audioContext.currentTime);
-                osc.connect(gain); gain.connect(audioContext.destination);
-                osc.start(); osc.stop(audioContext.currentTime + 0.02);
             } catch(e) {}
         }
         document.addEventListener('click', unlockAudio);
@@ -408,16 +405,21 @@
             try {
                 if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioContext.state === 'suspended') audioContext.resume();
+                
                 let time = audioContext.currentTime;
-                for (let i = 0; i < 7; i++) {
-                    let osc = audioContext.createOscillator(); let gain = audioContext.createGain();
-                    osc.type = 'square'; osc.frequency.setValueAtTime(1400, time + i * 0.10); 
-                    gain.gain.setValueAtTime(0.3, time + i * 0.10);
-                    gain.gain.exponentialRampToValueAtTime(0.01, time + i * 0.10 + 0.07);
-                    osc.connect(gain); gain.connect(audioContext.destination);
-                    osc.start(time + i * 0.10); osc.stop(time + i * 0.10 + 0.07);
+                for (let i = 0; i < 8; i++) {
+                    let osc = audioContext.createOscillator(); 
+                    let gain = audioContext.createGain();
+                    osc.type = 'square'; 
+                    osc.frequency.setValueAtTime(1450, time + i * 0.09); // Малко по-бърз и агресивен Delkim писък
+                    gain.gain.setValueAtTime(0.3, time + i * 0.09);
+                    gain.gain.exponentialRampToValueAtTime(0.01, time + i * 0.09 + 0.07);
+                    osc.connect(gain); 
+                    gain.connect(audioContext.destination);
+                    osc.start(time + i * 0.09); 
+                    osc.stop(time + i * 0.09 + 0.07);
                 }
-            } catch(e) {}
+            } catch(e) { console.log(e); }
         }
 
         function compressAndHandlePhoto(input) {
@@ -447,9 +449,13 @@
                 allCatches = [];
                 if (!isInitialLoad) {
                     snapshot.docChanges().forEach((change) => {
-                        if (change.type === "added" && change.doc.data().username !== currentUser) {
-                            playBiteAlarmSound(); 
-                            if (navigator.vibrate) navigator.vibrate([400, 150, 400, 150, 400]);
+                        if (change.type === "added") {
+                            const newCatchUser = change.doc.data().username || "";
+                            // Сравняваме с малки букви, за да няма грешки при изписването
+                            if (newCatchUser.toLowerCase() !== currentUser.toLowerCase()) {
+                                playBiteAlarmSound(); // СВИРИ РЪН В РЕАЛНО ВРЕМЕ!
+                                if (navigator.vibrate) navigator.vibrate([400, 150, 400, 150, 400]);
+                            }
                         }
                     });
                 }
@@ -490,7 +496,7 @@
             if (db) {
                 db.collection("sadina_catches").add(catchData)
                 .then(() => {
-                    alert("Уловът е записан в Firebase успешно!");
+                    alert("Уловът е записан успешно!");
                     document.getElementById('input-weight').value = "";
                     document.getElementById('photo-file').value = "";
                     document.getElementById('photo-preview-box').style.display = "none";
@@ -501,7 +507,7 @@
         }
 
         function analyzePatternMatching(w) {
-            const myCatches = allCatches.filter(c => c.user === currentUser);
+            const myCatches = allCatches.filter(c => c.user.toLowerCase() === currentUser.toLowerCase());
             const matches = myCatches.filter(c => Math.abs(c.weather_pressure - w.pressure) <= 3);
             const matchBox = document.getElementById('history-match-box');
             if(!matchBox) return;
@@ -552,15 +558,15 @@
                 let weightHtml = c.weight > 0 ? `⚖️ <strong>Тегло:</strong> ${c.weight.toFixed(2)} кг<br>` : '';
 
                 const html = `
-                    <div class="catch-item ${c.user !== currentUser ? 'others-catch' : ''}">
-                        <div class="catch-meta"><span>📅 ${dateStr} в ${timeStr} ч. | 📉 ${c.weather_pressure} hPa</span><span class="badge-user-tag" style="background:${c.user !== currentUser ? 'var(--admin-color)' : 'var(--accent-color)'}; color:${c.user !== currentUser ? '#fff' : '#121824'}">${c.user}</span></div>
+                    <div class="catch-item ${c.user.toLowerCase() !== currentUser.toLowerCase() ? 'others-catch' : ''}">
+                        <div class="catch-meta"><span>📅 ${dateStr} в ${timeStr} ч. | 📉 ${c.weather_pressure} hPa</span><span class="badge-user-tag" style="background:${c.user.toLowerCase() !== currentUser.toLowerCase() ? 'var(--admin-color)' : 'var(--accent-color)'}; color:${c.user.toLowerCase() !== currentUser.toLowerCase() ? '#fff' : '#121824'}">${c.user}</span></div>
                         <div class="catch-title">🐟 ${c.fish} на Садина</div>
                         <div class="catch-details">${weightHtml}• <strong>Стръв:</strong> ${c.size} ${c.baittype} (${c.color}, Аромат: <span style="color:#f1c40f;">${c.flavor}</span>)<br>• <strong>Захранка:</strong> ${c.groundbait && c.groundbait.length > 0 ? c.groundbait.join(', ') : 'Чисто петно'}</div>
                         ${loadedPhotoHtml}
                     </div>
                 `;
-                if (c.user === currentUser && personalList) personalList.innerHTML += html;
-                if (c.user !== currentUser && adminRadarList) { adminRadarList.innerHTML += html; hasOthers = true; }
+                if (c.user.toLowerCase() === currentUser.toLowerCase() && personalList) personalList.innerHTML += html;
+                if (c.user.toLowerCase() !== currentUser.toLowerCase() && adminRadarList) { adminRadarList.innerHTML += html; hasOthers = true; }
             });
 
             if (personalList && personalList.innerHTML === "") personalList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:20px;'>Твоят дневник е празен.</p>";
