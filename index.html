@@ -67,12 +67,12 @@
 </head>
 <body>
 
-    <!-- ЕКРАН ЗА ВХОД -->
     <div id="login-overlay">
         <div class="card" style="width: 100%; max-width: 400px; text-align: center; border-color: var(--accent-color);">
             <h2 style="color: var(--text-color); margin-bottom: 8px;">Садина Смарт Риболов</h2>
             <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 20px;">Въведете името си, за да се свържете с дневника на водоема.</p>
-            <input type="text" id="login-name-input" class="input-text" placeholder="Твоето Име (Прим: Пешо, Павел)" style="text-align: center; margin-bottom: 15px; font-size: 16px;">
+            <input type="text" id="login-name-input" class="input-text" placeholder="Твоето Име (Прим: Пешо, Иван)" style="text-align: center; margin-bottom: 12px; font-size: 16px;">
+            <input type="password" id="login-pass-input" class="input-text" placeholder="Парола (Само за VIP)" style="text-align: center; margin-bottom: 18px; font-size: 16px;">
             <button class="btn-submit" onclick="executeAppLogin()">ВЛЕЗ В СИСТЕМАТА 🚀</button>
         </div>
     </div>
@@ -84,16 +84,14 @@
     </header>
 
     <div class="container">
-        <!-- ТАБ 1: ТАБЛО -->
         <div id="view-dashboard" class="view active">
             
             <button class="btn-submit" onclick="playBiteAlarmSound()" style="margin-top: 0; margin-bottom: 15px; background: #34495e; color: #fff; border: 1px solid var(--border-color); padding: 10px;">🔊 ТЕСТ СИГНАЛИЗАТОР (Натисни веднъж на телефона)</button>
 
-            <!-- 👥 НОВА КАРТА: КОЙ Е ОНЛАЙН В МОМЕНТА -->
             <div class="card" style="border: 1px solid #3498db;">
                 <div class="card-title" style="color: #3498db;">👥 Рибари на линия (На живо)</div>
                 <div id="online-users-list" style="display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px;">
-                    <p style="color:var(--text-muted); font-size:12px;">Зареждане на активни потребители...</p>
+                    <p style="color:var(--text-muted); font-size:12px;">Зареждане на активност...</p>
                 </div>
             </div>
 
@@ -140,9 +138,9 @@
             </div>
 
             <div class="card">
-                <div class="card-title"><span>📍 Сателитна карта на сектора</span><a href="https://maps.google.com/?q=43.4122,24.8411&t=h" target="_blank" style="color:var(--accent-color); text-decoration:none; font-size:12px; border:1px solid var(--border-color); padding:2px 6px; border-radius:4px; background:#121824;">Цял Екран 🗺️</a></div>
+                <div class="card-title"><span>📍 Сателитна карта на сектора</span><a href="https://maps.google.com/..." target="_blank" style="color:var(--accent-color); text-decoration:none; font-size:12px; border:1px solid var(--border-color); padding:2px 6px; border-radius:4px; background:#121824;">Цял Екран 🗺️</a></div>
                 <div style="width: 100%; height: 220px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); position: relative;">
-                    <iframe width="100%" height="100%" frameborder="0" style="border:0;" src="https://maps.google.com/?q=43.4122,24.8411&t=h&output=embed" allowfullscreen></iframe>
+                    <iframe width="100%" height="100%" frameborder="0" style="border:0;" src="https://maps.google.com/maps?q=43.4122,24.8411&t=k&z=17&output=embed" allowfullscreen></iframe>
                 </div>
             </div>
 
@@ -153,12 +151,11 @@
             </div>
 
             <div class="card">
-                <div class="card-title">📊 Съвпадение от твоята история</div>
+                <div class="card-title">📊 Съвпадение от твоята history</div>
                 <div id="history-match-box" style="font-size: 13px; line-height: 1.4; color: #cbd5e1;">Няма излети за сравнение.</div>
             </div>
         </div>
 
-        <!-- ТАБ 2: НОВ УЛОВ -->
         <div id="view-log" class="view">
             <div class="card">
                 <div class="card-title">🎣 Запиши нов улов в Firebase</div>
@@ -219,7 +216,6 @@
             </div>
         </div>
 
-        <!-- ТАБ 3: ДНЕВНИК -->
         <div id="view-diary" class="view">
             <div class="card">
                 <div class="card-title">📖 Твоят личен дневник (От Firebase)</div>
@@ -239,7 +235,7 @@
 
     <script>
         // ==========================================
-        // ⚙️ МОДУЛ 1: КОНФИГУРАЦИЯ И СЕСИИ
+        // ⚙️ МОДУЛ 1: КОНФИГУРАЦИЯ И СЕСИИ С ВГРАДЕНА СИГУРНОСТ
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyA2Ik2KCs3YN7e4lsb-rKxNjiILX_0tyng",
@@ -270,7 +266,22 @@
 
         function executeAppLogin() {
             const nameInput = document.getElementById('login-name-input').value.trim();
+            const passInput = document.getElementById('login-pass-input').value.trim();
+            
             if(!nameInput) { alert("Моля, въведете име!"); return; }
+
+            const nameLower = nameInput.toLowerCase();
+            
+            // 🛡️ ХАРДУЕРНА ПРОВЕРКА НА ПАРОЛИТЕ ЗА VIP СИГУРНОСТ
+            if (nameLower === "павел хършев") {
+                if (passInput !== "1") { alert("Грешна парола за профил Павел Хършев!"); return; }
+            } else if (nameLower === "влади" || nameLower === "владко") {
+                if (passInput !== "2") { alert("Грешна парола за VIP профил!"); return; }
+            } else if (nameLower === "павел") {
+                // Адашът влиза без парола, но системата го маркира като обикновен потребител
+                console.log("Обикновен потребител адаш.");
+            }
+
             currentUser = nameInput;
             localStorage.setItem('sadina_user', currentUser);
             document.getElementById('login-overlay').style.display = 'none';
@@ -289,14 +300,17 @@
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
                 listenToFirebaseUpdates();
-                startPresenceHeartbeat(); // СТАРТИРАМЕ МОДУЛА ЗА ЖИВО СЛЕДЕНЕ ОНЛАЙН
+                startPresenceHeartbeat();
             }
             updateUserUI();
             fetchWeather();
         }
 
         function updateUserUI() {
-            const isAdmin = (currentUser.toLowerCase() === "павел" || currentUser.toLowerCase() === "влади");
+            const nameLower = currentUser.toLowerCase();
+            // Само пълното име "Павел Хършев" отключва чийта
+            const isAdmin = (nameLower === "павел хършев" || nameLower === "влади" || nameLower === "владко");
+            
             document.getElementById('current-user-display').innerText = currentUser + (isAdmin ? " (VIP)" : "");
             if (isAdmin) {
                 document.body.classList.add('is-admin');
@@ -399,28 +413,25 @@
         }
 
         // ==========================================
-        // 🎣 МОДУЛ 3: FIREBASE БАЗА, ЗВУК, СНИМКИ И ОНЛАЙН СЛЕДЕНЕ
+        // 🎣 МОДУЛ 3: FIREBASE БАЗА, ЗВУК, СНИМКИ И АНОНИМЕН БРОЯЧ
         // ==========================================
-        
-        // НОВО: ФУНКЦИИ ЗА ПОСЕТИТЕЛИ НА ЖИВО (PRESENCE HEARTBEAT)
         function startPresenceHeartbeat() {
             if (!db || !currentUser) return;
-            // Създаваме документ с името на човека с малки букви
             const userDocRef = db.collection("sadina_presence").doc(currentUser.toLowerCase());
             
             const reportPresence = () => {
                 userDocRef.set({
                     username: currentUser,
-                    last_active: Date.now() // Записваме кога за последно сме мръднали
+                    last_active: Date.now()
                 }).catch(e => console.log("Presence Error:", e));
             };
             
             reportPresence();
-            // На всеки 15 секунди „тупкаме“, че сме живи в приложението
             setInterval(reportPresence, 15000);
             listenToOnlineUsers();
         }
 
+        // 🛡️ АНОНИМЕН МОДУЛ: ПОКАЗВА САМО БРОЙКА, КРИЕ ИМЕНАТА НА 100%
         function listenToOnlineUsers() {
             if (!db) return;
             db.collection("sadina_presence").onSnapshot((snapshot) => {
@@ -432,20 +443,16 @@
                 
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    // Ако устройството е пратило импулс през последните 45 секунди го броим Онлайн
                     if (data.last_active && (now - data.last_active < 45000)) {
                         count++;
-                        const isVip = (data.username.toLowerCase() === "павел" || data.username.toLowerCase() === "влади");
-                        listDiv.innerHTML += `
-                            <span class="badge-user-tag" style="background: ${isVip ? 'var(--admin-color)' : '#2980b9'}; color: white; padding: 6px 12px; font-size: 12px; margin-left: 0; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; font-weight: bold;">
-                                🟢 ${data.username} ${isVip ? '★ VIP' : ''}
-                            </span>
-                        `;
                     }
                 });
-                if(count === 0) {
-                    listDiv.innerHTML = "<p style='color:var(--text-muted); font-size:12px;'>Само ти си на линия в момента.</p>";
-                }
+                
+                listDiv.innerHTML = `
+                    <span class="badge-user-tag" style="background: #2980b9; color: white; padding: 6px 12px; font-size: 13px; margin-left: 0; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; font-weight: bold;">
+                        🟢 В момента на водоема: ${count} ${count === 1 ? 'рибар' : 'рибари'}
+                    </span>
+                `;
             });
         }
 
