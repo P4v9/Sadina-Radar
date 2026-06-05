@@ -87,8 +87,15 @@
         <!-- ТАБ 1: ТАБЛО -->
         <div id="view-dashboard" class="view active">
             
-            <!-- 🔊 НОВ ХАРДУЕРЕН ТЕСТ БУТОН НАЙ-ОТГОРЕ -->
             <button class="btn-submit" onclick="playBiteAlarmSound()" style="margin-top: 0; margin-bottom: 15px; background: #34495e; color: #fff; border: 1px solid var(--border-color); padding: 10px;">🔊 ТЕСТ СИГНАЛИЗАТОР (Натисни веднъж на телефона)</button>
+
+            <!-- 👥 НОВА КАРТА: КОЙ Е ОНЛАЙН В МОМЕНТА -->
+            <div class="card" style="border: 1px solid #3498db;">
+                <div class="card-title" style="color: #3498db;">👥 Рибари на линия (На живо)</div>
+                <div id="online-users-list" style="display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px;">
+                    <p style="color:var(--text-muted); font-size:12px;">Зареждане на активни потребители...</p>
+                </div>
+            </div>
 
             <div class="card" style="border: 1px solid var(--gold-color);">
                 <div class="card-title" style="color: var(--gold-color);">🏆 ТОП ТРОФЕИ (Най-голяма риба най-отгоре)</div>
@@ -250,6 +257,7 @@
         let allCatches = [];
         let globalBase64Photo = "";
         let isInitialLoad = true;
+        let audioContext = null;
 
         function checkUserSession() {
             if (currentUser && currentUser.trim() !== "") {
@@ -281,6 +289,7 @@
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
                 listenToFirebaseUpdates();
+                startPresenceHeartbeat(); // СТАРТИРАМЕ МОДУЛА ЗА ЖИВО СЛЕДЕНЕ ОНЛАЙН
             }
             updateUserUI();
             fetchWeather();
@@ -390,8 +399,56 @@
         }
 
         // ==========================================
-        // 🎣 МОДУЛ 3: FIREBASE БАЗА, ЗВУК И СНИМКИ
+        // 🎣 МОДУЛ 3: FIREBASE БАЗА, ЗВУК, СНИМКИ И ОНЛАЙН СЛЕДЕНЕ
         // ==========================================
+        
+        // НОВО: ФУНКЦИИ ЗА ПОСЕТИТЕЛИ НА ЖИВО (PRESENCE HEARTBEAT)
+        function startPresenceHeartbeat() {
+            if (!db || !currentUser) return;
+            // Създаваме документ с името на човека с малки букви
+            const userDocRef = db.collection("sadina_presence").doc(currentUser.toLowerCase());
+            
+            const reportPresence = () => {
+                userDocRef.set({
+                    username: currentUser,
+                    last_active: Date.now() // Записваме кога за последно сме мръднали
+                }).catch(e => console.log("Presence Error:", e));
+            };
+            
+            reportPresence();
+            // На всеки 15 секунди „тупкаме“, че сме живи в приложението
+            setInterval(reportPresence, 15000);
+            listenToOnlineUsers();
+        }
+
+        function listenToOnlineUsers() {
+            if (!db) return;
+            db.collection("sadina_presence").onSnapshot((snapshot) => {
+                const listDiv = document.getElementById('online-users-list');
+                if(!listDiv) return;
+                listDiv.innerHTML = "";
+                let count = 0;
+                const now = Date.now();
+                
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    // Ако устройството е пратило импулс през последните 45 секунди го броим Онлайн
+                    if (data.last_active && (now - data.last_active < 45000)) {
+                        count++;
+                        const isVip = (data.username.toLowerCase() === "павел" || data.username.toLowerCase() === "влади");
+                        listDiv.innerHTML += `
+                            <span class="badge-user-tag" style="background: ${isVip ? 'var(--admin-color)' : '#2980b9'}; color: white; padding: 6px 12px; font-size: 12px; margin-left: 0; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; font-weight: bold;">
+                                🟢 ${data.username} ${isVip ? '★ VIP' : ''}
+                            </span>
+                        `;
+                    }
+                });
+                if(count === 0) {
+                    listDiv.innerHTML = "<p style='color:var(--text-muted); font-size:12px;'>Само ти си на линия в момента.</p>";
+                }
+            });
+        }
+
         function unlockAudio() {
             try {
                 if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -411,7 +468,7 @@
                     let osc = audioContext.createOscillator(); 
                     let gain = audioContext.createGain();
                     osc.type = 'square'; 
-                    osc.frequency.setValueAtTime(1450, time + i * 0.09); // Малко по-бърз и агресивен Delkim писък
+                    osc.frequency.setValueAtTime(1450, time + i * 0.09); 
                     gain.gain.setValueAtTime(0.3, time + i * 0.09);
                     gain.gain.exponentialRampToValueAtTime(0.01, time + i * 0.09 + 0.07);
                     osc.connect(gain); 
@@ -451,9 +508,8 @@
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === "added") {
                             const newCatchUser = change.doc.data().username || "";
-                            // Сравняваме с малки букви, за да няма грешки при изписването
                             if (newCatchUser.toLowerCase() !== currentUser.toLowerCase()) {
-                                playBiteAlarmSound(); // СВИРИ РЪН В РЕАЛНО ВРЕМЕ!
+                                playBiteAlarmSound(); 
                                 if (navigator.vibrate) navigator.vibrate([400, 150, 400, 150, 400]);
                             }
                         }
