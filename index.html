@@ -87,7 +87,7 @@
     <div class="container">
         <div id="view-dashboard" class="view active">
             
-            <button class="btn-submit" onclick="playBiteAlarmSound()" style="margin-top: 0; margin-bottom: 15px; background: #34495e; color: #fff; border: 1px solid var(--border-color); padding: 10px;">🔊 ТЕСТ СИГНАЛИЗАТОР (Натисни веднъж на телефона)</button>
+            <button class="btn-submit" onclick="playBiteAlarmSound()" style="margin-top: 0; margin-bottom: 15px; background: #34495e; color: #fff; border: 1px solid var(--border-color); padding: 10px;">🔊 ТЕСТ СИГНАЛИЗАТОР (Натисни веднъж)</button>
 
             <div class="card" style="border: 1px solid #3498db;">
                 <div class="card-title" style="color: #3498db;">👥 Рибари на линия (На живо)</div>
@@ -250,7 +250,10 @@
         let allCatches = [];
         let globalBase64Photo = "";
         let isInitialLoad = true;
-        let audioContext = null;
+
+        // 🔊 ДИНАМИЧЕН ИНТЕРНЕТ КЕШ БЪСТЪР ЗА ЗВУКА - УБИВА 404 ГРЕШКАТА ВЕДНЪЖ ЗАВИНАГИ!
+        const biteSound = new Audio('alarm.mp3?v=' + Date.now());
+        let audioUnlocked = false;
 
         function checkUserSession() {
             if (currentUser && currentUser.trim() !== "") {
@@ -336,7 +339,6 @@
         }
 
         function fetchWeather() {
-            // ИЗПОЛЗВАМЕ ТАКТИЧЕСКОТО ПРИВЕДЕНО НАЛЯГАНЕ (pressure_msl) ЗА СЪВПАДЕНИЕ С ТЕЛЕФОНИТЕ СЛЕД ТЕСТА ТИ
             const url = "https://api.open-meteo.com/v1/forecast?latitude=43.4122&longitude=24.8411&current=temperature_2m,pressure_msl,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto";
             const moonInfo = calculateMoonPhase(new Date());
             document.getElementById('w-moon').innerText = moonInfo.text;
@@ -370,7 +372,6 @@
         function calculateFishActivityAndLayers(w, moon) {
             let sharanPct = 55, sharanLayer = "Дъно";
 
-            // НАПЪЛНО ОБНОВЕНА КОРЕКТНА ШАРАНДЖИЙСКА СКАЛА (MSL) СЛЕД НАШИЯ РАЗГОВОР
             if (w.pressure >= 1013 && w.pressure <= 1017) {
                 sharanPct = Math.round(95 * moon.factor); 
                 sharanLayer = "Дъно (🥇 Златна зона! Рибата е спокойна и се храни активно)";
@@ -410,16 +411,11 @@
         // ==========================================
         // 🎣 МОДУЛ 3: ОБЕДИНЕН АИ МОДУЛ И FIREBASE БАЗА
         // ==========================================
-        
-        // 🔥 НОВИЯТ КОМБИНИРАН СОФТУЕРЕН ИНТЕЛЕКТ (ВАРЯНТ 1 + ВАРЯНТ 2)
         function runSmartAnalysis() {
             if (!currentWeatherData) return;
             const w = currentWeatherData;
             
-            // --- 🧪 ЧАСТ A: НАУЧЕН И БИОЛОГИЧЕН АНАЛИЗ (ВАРЯНТ 1) ---
             let scientificRec = "💡 <strong>Научен тактически анализ:</strong><br>";
-            
-            // Анализ според температурата (Метаболизъм)
             if (w.temp < 12) {
                 scientificRec += "• 🥶 Студена вода: Шаранът е с бавен метаболизъм. Заложете на дребна, силно атрактивна стръв (8-10мм дъмбели) и високо разтворими пикантни/алкохолни аромати (Чесън, Подправки, Цитрус). Избягвайте мазни рибни масла.<br>";
             } else if (w.temp >= 12 && w.temp <= 21) {
@@ -428,27 +424,21 @@
                 scientificRec += "• 🔥 Жега: Водата е топла, шаранът се храни тежко. Използвайте едра, силно хранителна протеинова стръв (20мм твърди топчета, пелети) и мазни, вкиснати или брутални месни аромати (Monster Crab, Сепия, Риба). За Амура – царевица или плодов контраст.<br>";
             }
             
-            // Анализ според налягането (Слоеве на водата)
             if (w.pressure > 1020) {
-                scientificRec += "• 🎈 Тежко високо налягане: Натиска мехура на рибата и я вади в горните слоеве. Дънният риболов ще е критично труден! <strong>Силно препоръчително е превключването на Зиг-Риг (Zig-Rig)</strong> с ярка жълта/черна пяна или поп-ъп.<br>";
+                scientificRec += "• 🎈 Тежко високо налягане: Натиска мехура на рибата и я вади в горните слоеве. Дънният риболов ще е критично труден! <strong>Силно препоръчително е превключването на Зиг-Риг (Zig-Rig)</strong> с ярка жълта/черна ядка или поп-ъп.<br>";
             } else if (w.pressure < 1010) {
                 scientificRec += "• ⛈️ Падащ барометър: Шараните слизат плътно на дъното и започват агресивно паническо хранене преди фронта. Слагайте силно дипната стръв с ярък флуоро акцент!<br>";
             } else if (w.pressure >= 1013 && w.pressure <= 1017) {
                 scientificRec += "• 🥇 Златна зона (1013-1017): Перфектна стабилност. Рибата е спокойна и застава продължително върху петна от тежка захранка на дъното.<br>";
             }
 
-            // --- 📊 ЧАСТ Б: ИЗКУСТВЕН ИНТЕЛЕКТ ОТ ВАШАТА ИСТОРИЯ (ВАРЯНТ 2) ---
             let statsRec = "<br>📊 <strong>Жива статистика от базата данни на Садина:</strong><br>";
-            
-            // Търсим улови в диапазон +/- 4 hPa налягане и +/- 4 градуса температура
             let matchingCatches = allCatches.filter(c => 
                 Math.abs(c.weather_pressure - w.pressure) <= 4 && 
                 Math.abs(c.weather_temp - w.temp) <= 4
             );
             
-            // Ако няма точни съвпадения по време, вземаме общата статистика, за да изчислим хита на гьола
             let targetCatches = matchingCatches.length > 0 ? matchingCatches : allCatches;
-            
             if (targetCatches.length > 0) {
                 let baits = {}, flavors = {}, colors = {}, sizes = {};
                 targetCatches.forEach(c => {
@@ -459,7 +449,6 @@
                 });
                 
                 const getTop = (obj) => Object.keys(obj).reduce((a, b) => obj[a] > obj[b] ? a : b);
-                
                 let topBait = getTop(baits) || "Топче";
                 let topFlavor = getTop(flavors) || "Шоколад";
                 let topColor = getTop(colors) || "Жълт";
@@ -474,7 +463,6 @@
                 statsRec += "ℹ️ Базата данни на Firebase е празна в момента. Запишете първите улови на излета, за да започне AI да пресмята процентите!";
             }
             
-            // Наливаме събраните данни в кутията
             document.getElementById('smart-recommendation').innerHTML = scientificRec + statsRec;
         }
 
@@ -489,7 +477,6 @@
             listenToOnlineUsers();
         }
 
-        // АНОНИМЕН БРОЯЧ: ПО БАРАРАНЕ НА ШЕФА ПОКАЗВА САМО БРОЙКА, КРИЕ ИМЕНАТА ЗА СИГУРНОСТ
         function listenToOnlineUsers() {
             if (!db) return;
             db.collection("sadina_presence").onSnapshot((snapshot) => {
@@ -508,29 +495,26 @@
             });
         }
 
+        // 🛡️ СУПЕР СТАБИЛНО ОТКЛЮЧВАНЕ НА MP3 БЕЗ КРАШВАНЕ НА НИШКАТА
         function unlockAudio() {
-            try {
-                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioContext.state === 'suspended') audioContext.resume();
-            } catch(e) {}
+            if (audioUnlocked) return;
+            biteSound.play().then(() => {
+                // Изсвирваме го микроскопично и веднага го нулираме – това казва на Windows/Mac/iOS: „Сайтът има право да свири!“
+                biteSound.pause();
+                biteSound.currentTime = 0;
+                audioUnlocked = true;
+                console.log("Аудиото е отключено безопасно.");
+            }).catch(e => console.log("Изчаква се взаимодействие..."));
         }
+        // Закачаме го само за първото пипане на екрана
         document.addEventListener('click', unlockAudio);
         document.addEventListener('touchstart', unlockAudio);
 
         function playBiteAlarmSound() {
             try {
-                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioContext.state === 'suspended') audioContext.resume();
-                let time = audioContext.currentTime;
-                for (let i = 0; i < 8; i++) {
-                    let osc = audioContext.createOscillator(); let gain = audioContext.createGain();
-                    osc.type = 'square'; osc.frequency.setValueAtTime(1450, time + i * 0.09); 
-                    gain.gain.setValueAtTime(0.3, time + i * 0.09);
-                    gain.gain.exponentialRampToValueAtTime(0.01, time + i * 0.09 + 0.07);
-                    osc.connect(gain); gain.connect(audioContext.destination);
-                    osc.start(time + i * 0.09); osc.stop(time + i * 0.09 + 0.07);
-                }
-            } catch(e) {}
+                biteSound.currentTime = 0; 
+                biteSound.play().catch(e => console.log("Грешка при старт на MP3 файлова нишка:", e));
+            } catch(e) { console.log(e); }
         }
 
         function compressAndHandlePhoto(input) {
@@ -669,7 +653,6 @@
             if (personalList && personalList.innerHTML === "") personalList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:20px;'>Твоят дневник е празен.</p>";
             if (adminRadarList && !hasOthers) adminRadarList.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding:10px; font-size:12px;'>Радарът е тих.</p>";
             
-            // Задействаме новия супер AI анализ веднага щом данните се рендират
             runSmartAnalysis();
         }
 
